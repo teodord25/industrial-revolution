@@ -41,30 +41,17 @@ internal class BlockBoiler : Block
             world.BlockAccessor.SetBlock(0, blockSel.Position);
             world.BlockAccessor.MarkBlockDirty(blockSel.Position);
 
-            EntityProperties oxProp = world.GetEntityType(new AssetLocation("game", "chicken"));
-            EntityProperties chickenProp = world.GetEntityType(new AssetLocation("game:chicken"));
-
-            IndustrialRevolutionModSystem.Logger?.Debug("ox is: " + oxProp);
+            EntityProperties chickenProp = world.GetEntityType(new AssetLocation("game:chicken-rooster"));
             IndustrialRevolutionModSystem.Logger?.Debug("chicken is: " + chickenProp);
 
-            Entity ox = world.ClassRegistry.CreateEntity(oxProp);
             Entity chicken = world.ClassRegistry.CreateEntity(chickenProp);
 
             chicken.ServerPos.X = blockSel.Position.X;
-            chicken.ServerPos.Y = blockSel.Position.Y;
+            chicken.ServerPos.Y = blockSel.Position.Y + 1;
             chicken.ServerPos.Z = blockSel.Position.Z;
-
             chicken.Pos.SetPos(chicken.ServerPos);
 
             world.SpawnEntity(chicken);
-
-            ox.ServerPos.X = blockSel.Position.X;
-            ox.ServerPos.Y = blockSel.Position.Y;
-            ox.ServerPos.Z = blockSel.Position.Z;
-
-            ox.Pos.SetPos(ox.ServerPos);
-
-            world.SpawnEntity(ox);
         }
 
         return true;
