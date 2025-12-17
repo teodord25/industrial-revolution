@@ -1,0 +1,14 @@
+{
+    "$schema": "https://moddbcdn.vintagestory.at/schema/modinfo.latest.json",
+    "type": "Code",
+    "modid": "industrialrevolution",
+    "name": "IndustrialRevolution",
+    "authors": [
+        "Yus"
+    ],
+    "description": "a mod about the industrial revolution i think",
+    "version": "1.0.0",
+    "dependencies": {
+        "game": "1.21.0"
+    }
+}

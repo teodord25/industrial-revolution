@@ -1,0 +1,44 @@
+{
+    "code": "boilerbasic",
+    "class": "BlockBoilerBasic",
+    "variantgroups": [
+        {
+            "code": "metal",
+            "states": [
+                "iron",
+                "steel"
+            ]
+        }
+    ],
+    "behaviors": [
+        {
+            "name": "HorizontalOrientable"
+        }
+    ],
+    "shape": {
+        "base": "block/basic/cube"
+    },
+    "textures": {
+        "all": {
+            "base": "game:block/metal/plate/{metal}"
+        }
+    },
+    "creativeinventory": {
+        "general": [
+            "*"
+        ],
+        "industrialrevolution": [
+            "*"
+        ]
+    },
+    "blockmaterial": "Metal",
+    "resistance": 6.0,
+    "requiressolidground": false,
+    "lightAbsorption": 0,
+    "sidesolid": {
+        "all": true
+    },
+    "sideopaque": {
+        "all": true
+    }
+}
