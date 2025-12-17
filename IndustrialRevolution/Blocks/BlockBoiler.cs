@@ -41,7 +41,7 @@ internal class BlockBoiler : Block
             world.BlockAccessor.SetBlock(0, blockSel.Position);
             world.BlockAccessor.MarkBlockDirty(blockSel.Position);
 
-            EntityProperties chickenProp = world.GetEntityType(new AssetLocation("game:chicken-rooster"));
+            EntityProperties chickenProp = world.GetEntityType(new AssetLocation("game:goat-muskox-adult-male"));
             IndustrialRevolutionModSystem.Logger?.Debug("chicken is: " + chickenProp);
 
             Entity chicken = world.ClassRegistry.CreateEntity(chickenProp);
