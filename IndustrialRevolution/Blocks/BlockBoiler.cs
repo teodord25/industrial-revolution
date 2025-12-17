@@ -24,10 +24,6 @@ internal class BlockBoiler : Block
     {
         if (world.Side == EnumAppSide.Server)
         {
-
-            world.Logger.Error("loggertest");
-            IndustrialRevolutionModSystem.Logger?.Info("loggertest");
-
             IServerPlayer serverPlayer = byPlayer as IServerPlayer;
 
             serverPlayer?.SendMessage(
