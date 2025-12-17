@@ -25,6 +25,9 @@ internal class BlockBoiler : Block
         if (world.Side == EnumAppSide.Server)
         {
 
+            world.Logger.Error("loggertest");
+            IndustrialRevolutionModSystem.Logger?.Info("loggertest");
+
             IServerPlayer serverPlayer = byPlayer as IServerPlayer;
 
             serverPlayer?.SendMessage(
@@ -38,26 +41,30 @@ internal class BlockBoiler : Block
             world.BlockAccessor.SetBlock(0, blockSel.Position);
             world.BlockAccessor.MarkBlockDirty(blockSel.Position);
 
-            EntityProperties type = world.GetEntityType(new AssetLocation("game", "goat-muskox-male-adult"));
+            EntityProperties oxProp = world.GetEntityType(new AssetLocation("game", "chicken"));
+            EntityProperties chickenProp = world.GetEntityType(new AssetLocation("game:chicken"));
 
-            if (type == null)
-            {
-                world.Logger.Error("Could not find fallingblock entity type!");
-                world.SpawnItemEntity(new ItemStack(block), blockSel.Position.ToVec3d().Add(0.5, 0.5, 0.5));
-                return true;
-            }
+            IndustrialRevolutionModSystem.Logger?.Debug("ox is: " + oxProp);
+            IndustrialRevolutionModSystem.Logger?.Debug("chicken is: " + chickenProp);
 
-            EntityProperties entityType = world.GetEntityType(new AssetLocation("game:chicken"));
+            Entity ox = world.ClassRegistry.CreateEntity(oxProp);
+            Entity chicken = world.ClassRegistry.CreateEntity(chickenProp);
 
-            Entity entity = world.ClassRegistry.CreateEntity(entityType);
+            chicken.ServerPos.X = blockSel.Position.X;
+            chicken.ServerPos.Y = blockSel.Position.Y;
+            chicken.ServerPos.Z = blockSel.Position.Z;
 
-            entity.ServerPos.X = 0;
-            entity.ServerPos.Y = 0;
-            entity.ServerPos.Z = 0;
+            chicken.Pos.SetPos(chicken.ServerPos);
 
-            entity.Pos.SetPos(entity.ServerPos);
+            world.SpawnEntity(chicken);
 
-            world.SpawnEntity(entity);
+            ox.ServerPos.X = blockSel.Position.X;
+            ox.ServerPos.Y = blockSel.Position.Y;
+            ox.ServerPos.Z = blockSel.Position.Z;
+
+            ox.Pos.SetPos(ox.ServerPos);
+
+            world.SpawnEntity(ox);
         }
 
         return true;
