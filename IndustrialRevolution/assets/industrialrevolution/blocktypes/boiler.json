@@ -1,6 +1,6 @@
 {
-    "code": "boilerbasic",
-    "class": "BlockBoilerBasic",
+    "code": "boiler",
+    "class": "industrialrevolution.boiler",
     "variantgroups": [
         {
             "code": "metal",
@@ -16,7 +16,7 @@
         }
     ],
     "shape": {
-        "base": "block/basic/cube"
+        "base": "game:block/basic/cube"
     },
     "textures": {
         "all": {
