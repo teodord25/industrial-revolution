@@ -1,0 +1,43 @@
+{
+    "code": "steam",
+    "class": "industrialrevolution.entitysteam",
+    "hitboxSize": {
+        "x": 1.0,
+        "y": 1.0
+    },
+    "client": {
+        "renderer": "Shape",
+        "shape": {
+            "base": "entity/steam"
+        },
+        "texture": {
+            "base": "entity/steam"
+        },
+        "behaviors": [
+            {
+                "code": "repulseagents"
+            },
+            {
+                "code": "controlledphysics",
+                "stepHeight": 1.1251
+            }
+        ]
+    },
+    "server": {
+        "behaviors": [
+            {
+                "code": "repulseagents"
+            },
+            {
+                "code": "controlledphysics",
+                "stepHeight": 1.1251
+            }
+        ]
+    },
+    "sounds": {
+        "hurt": "game:creature/hare-hurt",
+        "death": "game:creature/hare-hurt",
+        "idle": "game:creature/hare-idle"
+    },
+    "idleSoundChance": 0.03
+}

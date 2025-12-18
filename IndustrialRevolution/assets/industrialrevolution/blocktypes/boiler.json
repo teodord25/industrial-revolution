@@ -15,9 +15,7 @@
             "name": "HorizontalOrientable"
         }
     ],
-    "shape": {
-        "base": "game:block/basic/cube"
-    },
+    "drawtype": "Cube",
     "textures": {
         "all": {
             "base": "game:block/metal/plate/{metal}"

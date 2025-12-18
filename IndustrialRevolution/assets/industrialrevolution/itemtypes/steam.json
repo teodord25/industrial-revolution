@@ -1,0 +1,26 @@
+{
+        "code": "steam",
+        "class": "ItemCreature",
+        "maxstacksize": 64,
+        "shape": {
+                "base": "item/steam"
+        },
+        "texture": {
+                "base": "item/steam"
+        },
+        "creativeinventory": {
+                "general": [
+                        "*"
+                ],
+                "items": [
+                        "*"
+                ],
+                "creatures": [
+                        "*"
+                ],
+                "industrialrevolution": [
+                        "*"
+                ]
+        },
+        "materialDensity": 600
+}
