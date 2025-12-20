@@ -1,8 +1,8 @@
 using Vintagestory.API.Common;
 using System.Linq;
 using Vintagestory.API.Util;
-using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
+using IndustrialRevolution.util;
 
 using System.Collections.Generic;
 
@@ -25,15 +25,61 @@ internal partial class EntitySteam : EntityAgent
         // log?.Debug("-> expanded the steam");
     }
 
-    public void ExpandSteam()
+    public void ExpandSteamOnce()
     {
         log?.Debug("expanding steam");
-        // log?.Debug("occupied voxels:" + occupiedVoxels.ToString());
         occupiedVoxels.Clear();
-        // log?.Debug("cleared occupied voxels:" + occupiedVoxels.ToString());
         BlockPos startPos = Pos.AsBlockPos;
 
-        // Floodfill from entity position
+        Queue<BlockPos> toCheck = new Queue<BlockPos>();
+        HashSet<BlockPos> visited = new HashSet<BlockPos>();
+
+        toCheck.Enqueue(startPos);
+        visited.Add(startPos);
+
+        while (visited.Count < 1)
+        {
+            BlockPos pos = toCheck.Dequeue();
+            Block block = World.BlockAccessor.GetBlock(pos);
+
+            if (block.Id == 0 || block.IsLiquid() || !block.SideIsSolid(null, 0))
+            {
+                occupiedVoxels.Add(pos.Copy());
+
+                foreach (BlockFacing facing in BlockFacing.ALLFACES)
+                {
+                    BlockPos neighbor = pos.AddCopy(facing);
+
+                    if (!visited.Contains(neighbor))
+                    {
+                        visited.Add(neighbor);
+                        toCheck.Enqueue(neighbor);
+                    }
+                }
+            }
+        }
+
+        int[] coords = occupiedVoxels
+            .SelectMany(pos => new[] { pos.X, pos.Y, pos.Z })
+            .ToArray();
+
+        byte[] voxels = SerializerUtil.Serialize(coords);
+
+        WatchedAttributes.SetBytes("steam-occupied", voxels);
+        WatchedAttributes.MarkPathDirty("steam-occupied");
+
+        WatchedAttributes.SetBool("steam-touched", true);
+        WatchedAttributes.MarkPathDirty("steam-touched");
+
+        WatchedAttributes.SetInt("steamVolume", occupiedVoxels.Count);
+        WatchedAttributes.MarkPathDirty("steamVolume");
+    }
+
+    public void ExpandSteam()
+    {
+        occupiedVoxels.Clear();
+        BlockPos startPos = Pos.AsBlockPos;
+
         Queue<BlockPos> toCheck = new Queue<BlockPos>();
         HashSet<BlockPos> visited = new HashSet<BlockPos>();
 
@@ -42,12 +88,8 @@ internal partial class EntitySteam : EntityAgent
 
         while (toCheck.Count > 0 && occupiedVoxels.Count < maxVolume)
         {
-
             BlockPos pos = toCheck.Dequeue();
             Block block = World.BlockAccessor.GetBlock(pos);
-
-            // log?.Debug("checking:" + pos);
-            // log?.Debug("block:" + block);
 
             if (block.Id == 0 || block.IsLiquid() || !block.SideIsSolid(null, 0))
             {
