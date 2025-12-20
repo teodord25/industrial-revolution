@@ -3,7 +3,7 @@ using Vintagestory.API.Common;
 using System;
 using System.IO;
 
-namespace IndustrialRevolution;
+namespace IndustrialRevolution.util;
 
 public class ModLogger
 {
