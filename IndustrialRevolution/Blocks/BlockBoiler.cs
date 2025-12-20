@@ -24,14 +24,6 @@ internal class BlockBoiler : Block
     {
         if (world.Side == EnumAppSide.Server)
         {
-            IServerPlayer serverPlayer = byPlayer as IServerPlayer;
-
-            serverPlayer?.SendMessage(
-                GlobalConstants.GeneralChatGroup,
-                "You interacted with the boiler!",
-                EnumChatType.Notification
-            );
-
             Block block = world.BlockAccessor.GetBlock(blockSel.Position);
 
             world.BlockAccessor.SetBlock(0, blockSel.Position);

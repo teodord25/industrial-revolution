@@ -1,0 +1,28 @@
+{
+	"editor": {
+		"allAngles": false,
+		"entityTextureMode": false
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+	},
+	"textures": {
+            "steam-voxel": "entity/steam"
+	},
+	"elements": [
+		{
+			"name": "voxelcube",
+			"stepParentName": "SteamBody",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 1.0, 1.0, 1.0 ],
+			"faces": {
+				"north": { "texture": "#steam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+				"east": { "texture": "#setam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+				"south": { "texture": "#setam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+				"west": { "texture": "#setam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+				"up": { "texture": "#setam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+				"down": { "texture": "#setam-voxel", "uv": [ 0.0, 0.0, 1.0, 1.0 ] }
+			}
+		}
+	]}
