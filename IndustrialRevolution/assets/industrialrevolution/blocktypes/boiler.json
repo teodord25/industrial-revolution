@@ -1,6 +1,7 @@
 {
     "code": "boiler",
     "class": "industrialrevolution.blockboiler",
+    "entityclass": "industrialrevolution.entityboiler",
     "variantgroups": [
         {
             "code": "metal",

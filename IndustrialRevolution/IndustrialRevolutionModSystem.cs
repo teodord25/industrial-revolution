@@ -1,9 +1,11 @@
 ﻿using Vintagestory.API.Common;
-using IndustrialRevolution.Blocks;
-using IndustrialRevolution.Entities;
 using System.Collections.Generic;
 using Vintagestory.API.MathTools;
+
 using IndustrialRevolution.util;
+using IndustrialRevolution.Blocks;
+using IndustrialRevolution.BlockEntities;
+using IndustrialRevolution.Entities;
 
 namespace IndustrialRevolution;
 
@@ -24,6 +26,7 @@ public class IndustrialRevolutionModSystem : ModSystem
 
         api.RegisterBlockClass(Mod.Info.ModID + "." + "blockboiler", typeof(BlockBoiler));
         api.RegisterEntity(Mod.Info.ModID + "." + "entitysteam", typeof(EntitySteam));
+        api.RegisterBlockEntityClass(Mod.Info.ModID + "." + "entityboiler", typeof(BlockEntityBoiler));
 
         api.Network
             .RegisterChannel("steam-occupied")
