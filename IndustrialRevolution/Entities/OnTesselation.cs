@@ -10,7 +10,12 @@ internal partial class EntitySteam : EntityAgent
 {
     public HashSet<BlockPos> GetOccupiedVoxels()
     {
-        if (!WatchedAttributes.GetBool("steam-touched")) return [];
+        if (!WatchedAttributes.GetBool("steam-touched"))
+        {
+            log?.Debug("steam not touched, rejecting update");
+            return [];
+        }
+
         WatchedAttributes.MarkPathDirty("steam-touched");
 
         byte[] data = WatchedAttributes.GetBytes("steam-occupied");
@@ -32,10 +37,10 @@ internal partial class EntitySteam : EntityAgent
         var occupied = GetOccupiedVoxels();
         if (occupied.Count == 0)
         {
+            log?.Debug("occupied is 0, skipping");
             base.OnTesselation(ref entityShape, shapePathForLogging, ref shapeIsCloned);
             return;
         }
-        ;
 
         log?.Debug("=== OnTesselation START ===");
 
@@ -47,28 +52,29 @@ internal partial class EntitySteam : EntityAgent
         }
 
         ICoreClientAPI? capi = this.Api as ICoreClientAPI;
-
         var shapeLoc = new AssetLocation("industrialrevolution:shapes/entity/steam-voxel.json");
         var pos = this.Pos.AsBlockPos;
 
         foreach (var voxel in occupied)
         {
-            IAsset? asset = capi.Assets.TryGet(shapeLoc);
+            IAsset? asset = capi?.Assets.TryGet(shapeLoc);
+            Shape? partShape = asset?.ToObject<Shape>();
 
-            Shape? partShape = asset.ToObject<Shape>();
-            if (
-                    asset == null ||
-                    partShape == null ||
-                    capi == null
-            )
+            if (asset == null || partShape == null || capi == null)
             {
                 base.OnTesselation(ref entityShape, shapePathForLogging, ref shapeIsCloned);
                 return;
             }
 
-            for (int i = 0; i < 3; i++) {
-                partShape.Elements[0].From[i] += voxel[i] - pos[i];
-                partShape.Elements[0].To[i] += (voxel[i] + 1) - (pos[i] + 1);
+            partShape = partShape.Clone();
+
+            for (int i = 0; i < 3; i++)
+            {
+                // TODO: use this From and To stuff to modify existing
+                // segments rather than adding a voxel shape for every voxel
+                float offset = voxel[i] - pos[i];
+                partShape.Elements[0].From[i] = offset * 16;
+                partShape.Elements[0].To[i] = (offset + 1) * 16;
             }
 
             entityShape.StepParentShape(
@@ -91,9 +97,9 @@ internal partial class EntitySteam : EntityAgent
                     this.Properties.Client.Textures[textureCode] = ctex;
                 }
             );
-
-            base.OnTesselation(ref entityShape, shapePathForLogging, ref shapeIsCloned);
-            log?.Debug("=== OnTesselation END ===");
         }
+
+        base.OnTesselation(ref entityShape, shapePathForLogging, ref shapeIsCloned);
+        log?.Debug("=== OnTesselation END ===");
     }
 }

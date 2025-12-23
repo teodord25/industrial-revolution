@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using System.Linq;
 using Vintagestory.API.Util;
 using Vintagestory.API.MathTools;
@@ -12,7 +13,21 @@ internal partial class EntitySteam : EntityAgent
 {
     private ModLogger? log = IndustrialRevolutionModSystem.Logger;
     private HashSet<BlockPos> occupiedVoxels = new HashSet<BlockPos>();
-    private int maxVolume = 100; // Limit expansion
+    private int maxVolume = 300;
+
+    public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
+    {
+        base.Initialize(properties, api, InChunkIndex3d);
+
+        if (api.Side == EnumAppSide.Client)
+        {
+            WatchedAttributes.RegisterModifiedListener("steamShapeVersion", () =>
+            {
+                log?.Debug("Client detected steamShapeVersion change, marking shape modified");
+                this.MarkShapeModified();
+            });
+        }
+    }
 
     public override void OnInteract(EntityAgent byEntity, ItemSlot itemslot, Vec3d hitPosition, EnumInteractMode mode)
     {
@@ -21,30 +36,48 @@ internal partial class EntitySteam : EntityAgent
         ExpandSteam();
 
         this.MarkShapeModified();
-
-        // log?.Debug("-> expanded the steam");
     }
 
-    public void ExpandSteamOnce()
+    public void ExpandSteamNext(int voxelCount)
     {
-        log?.Debug("expanding steam");
-        occupiedVoxels.Clear();
         BlockPos startPos = Pos.AsBlockPos;
-
         Queue<BlockPos> toCheck = new Queue<BlockPos>();
         HashSet<BlockPos> visited = new HashSet<BlockPos>();
 
-        toCheck.Enqueue(startPos);
-        visited.Add(startPos);
+        foreach (var occupied in occupiedVoxels)
+        {
+            visited.Add(occupied);
+        }
 
-        while (visited.Count < 1)
+        foreach (var occupied in occupiedVoxels)
+        {
+            toCheck.Enqueue(occupied);
+        }
+
+        if (occupiedVoxels.Count == 0)
+        {
+            toCheck.Enqueue(startPos);
+            visited.Add(startPos);
+        }
+
+        // target = CURRENT + desired increase
+        int targetVoxelCount = occupiedVoxels.Count + voxelCount;
+
+        log?.Debug("visited:" + visited.Count);
+        while (toCheck.Count > 0 && occupiedVoxels.Count < targetVoxelCount)
         {
             BlockPos pos = toCheck.Dequeue();
             Block block = World.BlockAccessor.GetBlock(pos);
 
+            log?.Debug("checking:" + pos.ToString());
+
             if (block.Id == 0 || block.IsLiquid() || !block.SideIsSolid(null, 0))
             {
-                occupiedVoxels.Add(pos.Copy());
+                // Only add if not already occupied
+                if (!occupiedVoxels.Contains(pos))
+                {
+                    occupiedVoxels.Add(pos.Copy());
+                }
 
                 foreach (BlockFacing facing in BlockFacing.ALLFACES)
                 {
@@ -65,6 +98,8 @@ internal partial class EntitySteam : EntityAgent
 
         byte[] voxels = SerializerUtil.Serialize(coords);
 
+        log?.Debug("voxels: " + voxels.Count());
+
         WatchedAttributes.SetBytes("steam-occupied", voxels);
         WatchedAttributes.MarkPathDirty("steam-occupied");
 
@@ -73,6 +108,19 @@ internal partial class EntitySteam : EntityAgent
 
         WatchedAttributes.SetInt("steamVolume", occupiedVoxels.Count);
         WatchedAttributes.MarkPathDirty("steamVolume");
+
+        log?.Debug("about to mark shape modified");
+        this.MarkShapeModified();
+
+        int currentVersion = WatchedAttributes.GetInt("steamShapeVersion", 0);
+        log?.Debug("current ver" + currentVersion);
+
+        WatchedAttributes.SetInt("steamShapeVersion", currentVersion + 1);
+
+        log?.Debug("bumped to ver" + WatchedAttributes.GetInt("steamShapeVersion"));
+        WatchedAttributes.MarkPathDirty("steamShapeVersion");
+
+        log?.Debug("shape marked as modified");
     }
 
     public void ExpandSteam()
