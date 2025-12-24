@@ -49,6 +49,8 @@ namespace IndustrialRevolution.BlockEntities
             RegisterGameTickListener(OnGameTick, 1000); // every 1000ms
         }
 
+        // TODO: impl better heating (based on fuel used different temp)
+        // and water above removes heat from the boiler
         private void OnGameTick(float dt)
         {
             if (Api.Side != EnumAppSide.Server) return;
