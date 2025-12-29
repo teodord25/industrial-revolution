@@ -37,6 +37,10 @@
               omnisharp-roslyn
               mono
               msbuild
+
+              # for prototyping
+              python3
+              inotify-tools
             ];
             shellHook = ''
               # Source .env if it exists
@@ -52,6 +56,7 @@
 
               alias bld="./build.sh"
               alias dbg="./debug.sh"
+              alias prt="./prototype.sh"
             '';
           };
         }
