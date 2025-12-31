@@ -1,4 +1,5 @@
 import os
+from queue import Queue
 import time
 
 template = [
@@ -16,7 +17,7 @@ class Grid:
     height: int = 5
 
     # nodes on the edge of the cloud
-    on_edge: set[tuple[int, int]]
+    to_check: Queue[tuple[int, int]]
     occupied: set[tuple[int, int]]
     data: list[list[str]]
 
@@ -31,7 +32,7 @@ class Grid:
         self.set(self.start, "S")
 
         self.occupied = {self.start}
-        self.on_edge = {self.start}
+        self.to_check = Queue()
 
     def in_bounds(self, pos: tuple[int, int]) -> bool:
         x, y = pos[0], pos[1]
@@ -68,41 +69,34 @@ class Grid:
     def is_free(self, pos: tuple[int, int]):
         return self.get(pos) == " "
 
-def next(pos: tuple[int, int], grid: Grid):
-    l = (pos[0] - 1, pos[1])
-    r = (pos[0] + 1, pos[1])
-    u = (pos[0], pos[1] - 1)
-    d = (pos[0], pos[1] + 1)
-
-    def try_set(pos: tuple[int, int]):
-        if pos in grid.occupied: return
-        if not grid.is_free(pos): return
-
-        grid.set(pos, "S")
-        grid.occupied.add(pos)
-        grid.on_edge.add(pos)
-
-        grid.display()
-
-    try_set(l)
-    try_set(r)
-    try_set(u)
-    try_set(d)
+def faces(pos: tuple[int, int]):
+    return [
+        (pos[0] - 1, pos[1]),
+        (pos[0] + 1, pos[1]),
+        (pos[0], pos[1] - 1),
+        (pos[0], pos[1] + 1),
+    ]
 
 
 grid = Grid()
 LIMIT = 100
 
-def traverse(pos: tuple[int, int], grid: Grid):
-    if len(grid.occupied) > LIMIT: return
+def expand(start: tuple[int, int], grid: Grid):
+    if len(grid.occupied) == 0: grid.occupied.add(start)
+    if grid.to_check.qsize() == 0: grid.to_check.put(start)
 
-    next(pos, grid)
+    while len(grid.occupied) < LIMIT and grid.to_check.qsize() > 0:
+        curr = grid.to_check.get() # pop node being processed
 
-    # remove pos after processing
-    grid.on_edge.discard(pos)
+        for pos in faces(curr):
 
-    edge_nodes = set(grid.on_edge)
-    for node in edge_nodes:
-        traverse(node, grid)
+            if pos in grid.occupied: continue
+            if not grid.is_free(pos): continue
 
-traverse(grid.start, grid)
+            grid.set(pos, "S")
+            grid.occupied.add(pos)
+            grid.to_check.put(pos)
+
+        grid.display()
+
+expand(grid.start, grid)

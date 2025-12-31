@@ -1,3 +1,4 @@
-while inotifywait -e modify ./python-prototyping/main.py;
-    do python3 ./python-prototyping/main.py;
+while true; do
+    inotifywait -e close_write ./python-prototyping/main.py
+    python3 ./python-prototyping/main.py
 done
