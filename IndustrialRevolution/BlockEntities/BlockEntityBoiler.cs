@@ -1,5 +1,6 @@
 using System;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
@@ -18,6 +19,26 @@ namespace IndustrialRevolution.BlockEntities
         private const float AMBIENT_TEMP = 20f;
         private const float HEAT_RATE = 2f;
         private const float COOL_RATE = 0.5f;
+
+        private void SpawnEntityAt(BlockPos pos, Entity entity)
+        {
+            var entityPos = pos.Copy();
+
+            entity.ServerPos.X = entityPos.X + 0.5;
+            entity.ServerPos.Y = entityPos.Y;
+            entity.ServerPos.Z = entityPos.Z + 0.5;
+
+            // TODO: why does this happen
+            // NOTE: rotate to align local axes with world axes
+            entity.ServerPos.Yaw = -GameMath.PIHALF;
+
+            entity.ServerPos.Pitch = 0f;
+            entity.ServerPos.Roll = 0f;
+
+            entity.Pos.SetPos(entity.ServerPos);
+
+            this.Api.World.SpawnEntity(entity);
+        }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
@@ -49,6 +70,48 @@ namespace IndustrialRevolution.BlockEntities
             RegisterGameTickListener(OnGameTick, 1000); // every 1000ms
         }
 
+        public bool SpawnSteam()
+        {
+            var world = this.Api.World;
+
+            if (world.Side == EnumAppSide.Server)
+            {
+                BlockPos above = Pos.UpCopy();
+
+                if (world.BlockAccessor.GetBlock(above).Id != 0)
+                {
+                    IndustrialRevolutionModSystem.Logger?.Debug("block above is NOT AIR!!!");
+                    return false;
+                }
+
+                // check if steam entity already exists above
+                Vec3d centerPos = above.ToVec3d();
+                Entity[] nearbyEntities = world.GetEntitiesAround(
+                    centerPos,
+                    1.0f, // search radius
+                    1.0f, // search height
+                    (entity) => entity.Code?.Path == "steam" &&
+                               entity.Code?.Domain == "industrialrevolution"
+                );
+
+                if (nearbyEntities != null && nearbyEntities.Length > 0)
+                {
+                    log?.Debug("Steam entity already exists above boiler");
+                    return false;
+                }
+
+                EntityProperties steamProp = world.GetEntityType(
+                    new AssetLocation("industrialrevolution:steam")
+                );
+
+                Entity steam = world.ClassRegistry.CreateEntity(steamProp);
+
+                this.SpawnEntityAt(above, steam);
+            }
+
+            return true;
+        }
+
         // TODO: impl better heating (based on fuel used different temp)
         // and water above removes heat from the boiler
         private void OnGameTick(float dt)
@@ -67,6 +130,11 @@ namespace IndustrialRevolution.BlockEntities
             else
             {
                 temperature = Math.Max(temperature - COOL_RATE, AMBIENT_TEMP);
+            }
+
+            if (temperature > 30)
+            {
+                SpawnSteam();
             }
 
             // mark dirty if temperature changed significantly
