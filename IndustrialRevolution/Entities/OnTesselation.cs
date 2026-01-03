@@ -10,15 +10,7 @@ internal partial class EntitySteam : EntityAgent
 {
     public HashSet<BlockPos> GetOccupiedVoxels()
     {
-        if (!WatchedAttributes.GetBool("steam-touched"))
-        {
-            log?.Debug("steam not touched, rejecting update");
-            return [];
-        }
-
-        WatchedAttributes.MarkPathDirty("steam-touched");
-
-        byte[] data = WatchedAttributes.GetBytes("steam-occupied");
+        byte[] data = WatchedAttributes.GetBytes("steamOccupied");
         if (data == null) return new HashSet<BlockPos>();
 
         int[] coords = SerializerUtil.Deserialize<int[]>(data);

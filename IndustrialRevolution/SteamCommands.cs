@@ -2,10 +2,14 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Server;
 using IndustrialRevolution.Entities;
+using IndustrialRevolution.util;
+
+namespace IndustrialRevolution;
 
 public class SteamCommandMod : ModSystem
 {
     private ICoreServerAPI? api;
+    public ModLogger? log = IndustrialRevolutionModSystem.Logger;
 
     public override bool ShouldLoad(EnumAppSide side)
     {
@@ -94,7 +98,7 @@ public class SteamCommandMod : ModSystem
 
         if (steamEntity is EntitySteam steam)
         {
-            steam.ExpandSteamNext(steps);
+            steam.ExpandSteam();
             return TextCommandResult.Success($"Triggered {steps} expansion step(s) on steam entity.");
         }
 
