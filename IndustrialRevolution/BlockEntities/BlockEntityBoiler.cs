@@ -95,10 +95,7 @@ namespace IndustrialRevolution.BlockEntities
                 );
 
                 if (nearbyEntities != null && nearbyEntities.Length > 0)
-                {
-                    log?.Debug("Steam entity already exists above boiler");
                     return false;
-                }
 
                 EntityProperties steamProp = world.GetEntityType(
                     new AssetLocation("industrialrevolution:steam")
