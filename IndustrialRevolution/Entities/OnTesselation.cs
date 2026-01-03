@@ -8,6 +8,8 @@ namespace IndustrialRevolution.Entities;
 
 internal partial class EntitySteam : EntityAgent
 {
+    // TODO: only draw edge voxels, somehow, maybe through toCheck or something
+    // because drawing in occluded voxels for chiseled blocks could get crazy...
     public HashSet<BlockPos> GetOccupiedVoxels()
     {
         byte[] data = WatchedAttributes.GetBytes("steamOccupied");
