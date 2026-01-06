@@ -2,42 +2,15 @@ using Vintagestory.API.Common;
 using System.Linq;
 using Vintagestory.API.Util;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
+
 using System.Collections.Generic;
+using System;
 
 namespace IndustrialRevolution.Entities;
 
-public class SteamVolume
-{
-    private long totalVolumeInVoxels;
-
-    private SteamVolume(long voxels) { totalVolumeInVoxels = voxels; }
-
-    public static SteamVolume FromVoxels(long voxels)
-    {
-        return new SteamVolume(voxels);
-    }
-
-    public static SteamVolume? FromBlocks(decimal blocks)
-    {
-        // if the blocks arent a multiple of 1/(16*16*16) reject
-        if (blocks * 4096 % 1 != 0) return null;
-        return new SteamVolume((long)(blocks * 4096));
-    }
-
-    public long AsVoxels() => this.totalVolumeInVoxels;
-    public decimal AsBlocks() => this.totalVolumeInVoxels / 4096;
-}
-
 internal partial class EntitySteam : EntityAgent
 {
-    private HashSet<BlockPos> occupied = new HashSet<BlockPos>();
-    private Queue<BlockPos> to_check = new Queue<BlockPos>();
-
-    private SteamVolume totVol = SteamVolume.FromVoxels(0);
-    private SteamVolume? maxVol = SteamVolume.FromBlocks(4);
-
-    private int maxVolumeInBlocks = 15;
-
     private BlockPos[] NeighborPositions(BlockPos pos)
     {
         BlockPos[] neighbors = new BlockPos[6];
@@ -56,47 +29,68 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
-    private bool IsPassable(BlockPos from, BlockPos to)
+    private void ExpandThroughChiseled(BlockEntityMicroBlock BE)
     {
-        if (World.BlockAccessor.GetBlock(to).Id == 0) return true;
-
-        // TODO: keep track of these non air blocks for like
-        // container detection. Will knowing the mesh of the
-        // container be enough to allow for pistons and so on? (changing shapes)
-        // BlockFacing direction = BlockFacing.FromVector(
-        //     to.X - from.X,
-        //     to.Y - from.Y,
-        //     to.Z - from.Z
-        // );
-
-        return true;
+        // TODO:
     }
 
+    private void DecodeVoxel(uint encoded, int[] blockIds)
+    {
+        // TODO:
+    }
+
+    // TODO: simplify
     public void ExpandSteam()
     {
-        var root = this.Pos.AsBlockPos;
+        // TODO: check if root is fullblock
+        var root = SteamPos.FromBlockPos(true, this.Pos.AsBlockPos);
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
         if (this.to_check.Count == 0) this.to_check.Enqueue(root);
 
         while (
-            occupied.Count < this.maxVolumeInBlocks &&
+            occupied.Count < this.maxVol?.AsBlocks() &&
             this.to_check.Count() > 0
         )
         {
             var curr = this.to_check.Dequeue();
 
-            foreach (BlockPos pos in this.NeighborPositions(curr))
+            foreach (BlockPos neigh in this.NeighborPositions(curr))
             {
-                if (this.occupied.Contains(pos)) continue;
-                if (!this.IsPassable(curr, pos)) continue;
+                Block neighBlock = World.BlockAccessor.GetBlock(neigh);
 
-                // TODO
-                // if (this.IsChiseled(pos)) this.ExpandThroughChiseled(pos)
+                if (this.occupied.Contains(neigh)) continue;
 
-                this.occupied.Add(pos.Copy());
+                SteamPos steampos = SteamPos.FromBlockPos(true, neigh);
 
-                this.to_check.Enqueue(pos);
+                BlockEntity neighBE = this
+                    .Api
+                    .World
+                    .BlockAccessor
+                    .GetBlockEntity(neigh);
+
+                if (neighBE is BlockEntityMicroBlock beMicroBlock)
+                {
+                    List<uint> cuboids = beMicroBlock.VoxelCuboids;
+                    var blockIds = beMicroBlock.BlockIds;
+
+                    foreach (uint cuboid in cuboids)
+                        // log?.Debug(String.Join(", ", DecodeVoxel(cuboid, blockIds)));
+
+                    this.ExpandThroughChiseled(beMicroBlock);
+
+                    steampos = SteamPos.FromBlockPos(false, neigh);
+                } else {
+                    // if not blockentity and not air; skip
+                    if (neighBlock.Id != 0) continue;
+                }
+
+                // TODO: keep track of these non air blocks for like
+                // container detection. Will knowing the mesh of the
+                // container be enough to allow for pistons and so on? (changing shapes)
+
+                this.occupied.Add(steampos);
+                this.to_check.Enqueue(neigh);
             }
         }
 

@@ -1,7 +1,5 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using System.Linq;
-using Vintagestory.API.Util;
 
 using System.Collections.Generic;
 using Vintagestory.API.MathTools;
@@ -11,25 +9,37 @@ namespace IndustrialRevolution.Entities;
 
 internal partial class EntitySteam : EntityAgent
 {
+    private HashSet<SteamPos> occupied = new HashSet<SteamPos>();
+    private Queue<BlockPos> to_check = new Queue<BlockPos>();
+
+    private SteamVolume volume = SteamVolume.FromVoxels(0);
+    private SteamVolume? maxVol = SteamVolume.FromBlocks(10);
 
     private ModLogger? log = IndustrialRevolutionModSystem.Logger;
     private HashSet<BlockPos> occupiedVoxels = new HashSet<BlockPos>();
 
-    public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
+    public override void Initialize(
+        EntityProperties properties, ICoreAPI api, long InChunkIndex3d
+    )
     {
         base.Initialize(properties, api, InChunkIndex3d);
 
-        if (api.Side == EnumAppSide.Client)
+        if (api.Side == EnumAppSide.Server) return;
+
+        WatchedAttributes.RegisterModifiedListener("steamShapeVersion", () =>
         {
-            WatchedAttributes.RegisterModifiedListener("steamShapeVersion", () =>
-            {
-                log?.Debug("Client detected steamShapeVersion change, marking shape modified");
-                this.MarkShapeModified();
-            });
-        }
+            log?.Debug(
+                "Client detected steamShapeVersion change," +
+                " marking shape modified"
+            );
+            this.MarkShapeModified();
+        });
     }
 
-    public override void OnInteract(EntityAgent byEntity, ItemSlot itemslot, Vec3d hitPosition, EnumInteractMode mode)
+    public override void OnInteract(
+        EntityAgent byEntity, ItemSlot itemslot,
+        Vec3d hitPosition, EnumInteractMode mode
+    )
     {
         if (mode != EnumInteractMode.Interact) return;
 

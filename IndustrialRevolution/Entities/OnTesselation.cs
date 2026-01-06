@@ -10,7 +10,7 @@ internal partial class EntitySteam : EntityAgent
 {
     // TODO: only draw edge voxels, somehow, maybe through toCheck or something
     // because drawing in occluded voxels for chiseled blocks could get crazy...
-    public HashSet<BlockPos> GetOccupiedVoxels()
+    public HashSet<BlockPos> GetOccupied()
     {
         byte[] data = WatchedAttributes.GetBytes("steamOccupied");
         if (data == null) return new HashSet<BlockPos>();
@@ -28,7 +28,7 @@ internal partial class EntitySteam : EntityAgent
 
     protected override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned)
     {
-        var occupied = GetOccupiedVoxels();
+        var occupied = GetOccupied();
         if (occupied.Count == 0)
         {
             log?.Debug("occupied is 0, skipping");
