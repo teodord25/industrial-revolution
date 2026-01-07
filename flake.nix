@@ -50,7 +50,18 @@
               # for prototyping
               python3
               inotify-tools
+
+              stdenv.cc.cc.lib
+              zlib
+
+              python3Packages.tkinter
             ];
+
+            LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [
+              pkgs.stdenv.cc.cc.lib
+              pkgs.zlib
+            ]}";
+
             shellHook = ''
               # Source .env if it exists
               if [ -f .env ]; then
@@ -65,7 +76,8 @@
 
               alias bld="./build.sh"
               alias dbg="./debug.sh"
-              alias wt="./python-prototyping/watch.sh"
+              alias wt="./watch.sh"
+              alias prt="source ./venv/bin/activate && pip install -r requirements.txt"
             '';
           };
         }
