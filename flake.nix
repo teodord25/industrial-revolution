@@ -65,7 +65,7 @@
 
               alias bld="./build.sh"
               alias dbg="./debug.sh"
-              alias prt="./python-prototyping/prototype.sh"
+              alias wt="./python-prototyping/watch.sh"
             '';
           };
         }
