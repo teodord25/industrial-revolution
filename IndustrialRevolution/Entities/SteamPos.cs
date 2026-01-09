@@ -32,4 +32,8 @@ public class SteamPos : BlockPos
     {
         return new SteamPos(isFullBlock, x, y, z);
     }
+
+    public void SetGrid(byte[,,] grid) {
+        this.grid = grid;
+    }
 }
