@@ -4,7 +4,7 @@ namespace IndustrialRevolution.util;
 
 public class SteamUtils
 {
-    public static string GridToString(byte[,,] array)
+    public static string GridToString<T>(T[,,] array)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"VOXEL PRINTER GO BRR");
