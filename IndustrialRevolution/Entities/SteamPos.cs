@@ -7,23 +7,25 @@ public class SteamPos : BlockPos
 {
     public bool isFullBlock;
 
-    public byte[,,]? grid;
+    // NOTE: this grid represents which voxels
+    // of this block are occupied by steam
+    public byte[,,]? steamGrid;
 
-    public int? countSolid()
+    public int? countOccupied()
     {
-        if (grid == null)
+        if (steamGrid == null)
         {
             return null;
         }
 
-        return grid.Cast<byte>().Count(x => x != 0);
+        return steamGrid.Cast<byte>().Count(x => x != 0);
     }
 
-    private SteamPos(int x, int y, int z, bool isFullBlock, byte[,,]? grid)
+    private SteamPos(int x, int y, int z, bool isFullBlock, byte[,,]? steamGrid)
         : base(x, y, z)
     {
         this.isFullBlock = isFullBlock;
-        this.grid = grid;
+        this.steamGrid = steamGrid;
     }
 
     public static SteamPos SolidFromBlockPos(BlockPos pos)
@@ -31,9 +33,9 @@ public class SteamPos : BlockPos
         return new SteamPos(pos.X, pos.Y, pos.Z, true, null);
     }
 
-    public static SteamPos ChsldFromBlockPos(BlockPos pos, byte[,,] grid)
+    public static SteamPos ChsldFromBlockPos(BlockPos pos, byte[,,] steamGrid)
     {
-        return new SteamPos(pos.X, pos.Y, pos.Z, false, grid);
+        return new SteamPos(pos.X, pos.Y, pos.Z, false, steamGrid);
     }
 
     public static SteamPos SolidFromXYZ(int x, int y, int z)
@@ -41,13 +43,13 @@ public class SteamPos : BlockPos
         return new SteamPos(x, y, z, true, null);
     }
 
-    public static SteamPos ChsldFromXYZ(int x, int y, int z, byte[,,] grid)
+    public static SteamPos ChsldFromXYZ(int x, int y, int z, byte[,,] steamGrid)
     {
-        return new SteamPos(x, y, z, false, grid);
+        return new SteamPos(x, y, z, false, steamGrid);
     }
 
-    public void SetGrid(byte[,,] grid)
+    public void SetGrid(byte[,,] steamGrid)
     {
-        this.grid = grid;
+        this.steamGrid = steamGrid;
     }
 }
