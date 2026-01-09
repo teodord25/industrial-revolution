@@ -19,4 +19,8 @@ public class SteamVolume
 
     public long AsVoxels() => this.totalVolumeInVoxels;
     public decimal AsBlocks() => this.totalVolumeInVoxels / 4096;
+
+    public void AddVoxels(long voxels) {
+        this.totalVolumeInVoxels += voxels;
+    }
 }
