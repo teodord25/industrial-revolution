@@ -27,4 +27,9 @@ public class SteamPos : BlockPos
     {
         return new SteamPos(isFullBlock, pos.X, pos.Y, pos.Z);
     }
+
+    public static SteamPos FromXYZ(bool isFullBlock, int x, int y, int z)
+    {
+        return new SteamPos(isFullBlock, x, y, z);
+    }
 }
