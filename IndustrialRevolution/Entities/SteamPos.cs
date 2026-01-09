@@ -9,31 +9,45 @@ public class SteamPos : BlockPos
 
     public byte[,,]? grid;
 
-    public int? countSolid() {
-        if (grid == null) {
+    public int? countSolid()
+    {
+        if (grid == null)
+        {
             return null;
         }
 
         return grid.Cast<byte>().Count(x => x != 0);
     }
 
-    private SteamPos(bool isFullBlock, int x, int y, int z) : base(x, y, z)
+    private SteamPos(int x, int y, int z, bool isFullBlock, byte[,,]? grid)
+        : base(x, y, z)
     {
         this.isFullBlock = isFullBlock;
-        this.grid = null;
+        this.grid = grid;
     }
 
-    public static SteamPos FromBlockPos(bool isFullBlock, BlockPos pos)
+    public static SteamPos SolidFromBlockPos(BlockPos pos)
     {
-        return new SteamPos(isFullBlock, pos.X, pos.Y, pos.Z);
+        return new SteamPos(pos.X, pos.Y, pos.Z, true, null);
     }
 
-    public static SteamPos FromXYZ(bool isFullBlock, int x, int y, int z)
+    public static SteamPos ChsldFromBlockPos(BlockPos pos, byte[,,] grid)
     {
-        return new SteamPos(isFullBlock, x, y, z);
+        return new SteamPos(pos.X, pos.Y, pos.Z, false, grid);
     }
 
-    public void SetGrid(byte[,,] grid) {
+    public static SteamPos SolidFromXYZ(int x, int y, int z)
+    {
+        return new SteamPos(x, y, z, true, null);
+    }
+
+    public static SteamPos ChsldFromXYZ(int x, int y, int z, byte[,,] grid)
+    {
+        return new SteamPos(x, y, z, false, grid);
+    }
+
+    public void SetGrid(byte[,,] grid)
+    {
         this.grid = grid;
     }
 }
