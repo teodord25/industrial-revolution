@@ -29,23 +29,27 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
+    private (EnumAxis, int) GetCoordinateStartForFace(BlockFacing face)
+    {
+        if (face == BlockFacing.NORTH) return (EnumAxis.Z, 0);
+        if (face == BlockFacing.SOUTH) return (EnumAxis.Z, 15);
+        if (face == BlockFacing.WEST) return (EnumAxis.X, 0);
+        if (face == BlockFacing.EAST) return (EnumAxis.X, 15);
+        if (face == BlockFacing.DOWN) return (EnumAxis.Y, 0);
+        if (face == BlockFacing.UP) return (EnumAxis.Y, 15);
+
+        return (EnumAxis.Y, 15);
+    }
+
     private bool PassableFace(byte[,,] voxelGrid, BlockPos from, BlockPos to)
     {
-        int x = 0, y = 0, z = 0;
-        bool x_face = false, y_face = false, z_face = false;
-
         BlockFacing face = BlockFacing.FromVector(
             to.X - from.X,
             to.Y - from.Y,
             to.Z - from.Z
         ).Opposite;
 
-        if (face == BlockFacing.NORTH) { z_face = true; z = 0; }
-        if (face == BlockFacing.SOUTH) { z_face = true; z = 15; }
-        if (face == BlockFacing.WEST) { x_face = true; x = 0; }
-        if (face == BlockFacing.EAST) { x_face = true; x = 15; }
-        if (face == BlockFacing.DOWN) { y_face = true; y = 0; }
-        if (face == BlockFacing.UP) { y_face = true; y = 15; }
+        (EnumAxis axis, int const_val) = GetCoordinateStartForFace(face);
 
         List<int[]> holes = new List<int[]>();
 
@@ -56,9 +60,9 @@ internal partial class EntitySteam : EntityAgent
                 byte voxel = 0;
                 int[] pos = { };
 
-                if (x_face) pos = [x, i, j];
-                if (y_face) pos = [i, y, j];
-                if (z_face) pos = [i, j, z];
+                if (axis == EnumAxis.X) pos = [const_val, i, j];
+                if (axis == EnumAxis.Y) pos = [i, const_val, j];
+                if (axis == EnumAxis.Z) pos = [i, j, const_val];
 
                 voxel = voxelGrid[pos[0], pos[1], pos[2]];
 
