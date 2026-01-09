@@ -29,20 +29,56 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
-    private void ExpandThroughChiseled(BlockEntityMicroBlock BE)
+    private bool PassableFace(byte[,,] voxelGrid, BlockPos from, BlockPos to)
     {
-        // TODO:
-    }
+        int x = 0, y = 0, z = 0;
+        bool x_face = false, y_face = false, z_face = false;
 
-    private void DecodeVoxel(uint encoded, int[] blockIds)
-    {
-        // TODO:
+        BlockFacing face = BlockFacing.FromVector(
+            to.X - from.X,
+            to.Y - from.Y,
+            to.Z - from.Z
+        ).Opposite;
+
+        if (face == BlockFacing.NORTH) { z_face = true; z = 0; }
+        if (face == BlockFacing.SOUTH) { z_face = true; z = 15; }
+        if (face == BlockFacing.WEST) { x_face = true; x = 0; }
+        if (face == BlockFacing.EAST) { x_face = true; x = 15; }
+        if (face == BlockFacing.DOWN) { y_face = true; y = 0; }
+        if (face == BlockFacing.UP) { y_face = true; y = 15; }
+
+        List<int[]> holes = new List<int[]>();
+
+        for (int i = 0; i < 16; i++)
+        {
+            for (int j = 0; j < 16; j++)
+            {
+                byte voxel = 0;
+                int[] pos = { };
+
+                if (x_face) pos = [x, i, j];
+                if (y_face) pos = [i, y, j];
+                if (z_face) pos = [i, j, z];
+
+                voxel = voxelGrid[pos[0], pos[1], pos[2]];
+
+                if (voxel == 0) holes.Add(pos);
+            }
+        }
+
+        if (holes.Count > 0) return true;
+
+        return false;
     }
 
     // TODO: simplify
     public void ExpandSteam()
     {
         // TODO: check if root is fullblock
+        // TODO: for now allow only 1x1x1 full water block, but I could maybe
+        // later add some kind of mechanic where you could place water into a
+        // chiseled block and just do a "where would falling water collect" and
+        // fill the containers with fake water and set those as the steam source
         var root = SteamPos.FromBlockPos(true, this.Pos.AsBlockPos);
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
@@ -71,23 +107,27 @@ internal partial class EntitySteam : EntityAgent
 
                 if (neighBE is BlockEntityMicroBlock beMicroBlock)
                 {
+                    var voxelGrid = GetVoxelGrid(beMicroBlock);
+                    if (this.PassableFace(voxelGrid, curr, neigh))
+                    { log?.Debug("OH YEAH"); }
+                    else { log?.Debug("bruhhhhhh"); }
+
                     List<uint> cuboids = beMicroBlock.VoxelCuboids;
                     var blockIds = beMicroBlock.BlockIds;
-
-                    foreach (uint cuboid in cuboids)
-                        // log?.Debug(String.Join(", ", DecodeVoxel(cuboid, blockIds)));
-
-                    this.ExpandThroughChiseled(beMicroBlock);
+                    // this.ExpandThroughChiseled(beMicroBlock);
 
                     steampos = SteamPos.FromBlockPos(false, neigh);
-                } else {
+                }
+                else
+                {
                     // if not blockentity and not air; skip
                     if (neighBlock.Id != 0) continue;
                 }
 
                 // TODO: keep track of these non air blocks for like
                 // container detection. Will knowing the mesh of the
-                // container be enough to allow for pistons and so on? (changing shapes)
+                // container be enough to allow for pistons and so on?
+                // (changing shapes)
 
                 this.occupied.Add(steampos);
                 this.to_check.Enqueue(neigh);
