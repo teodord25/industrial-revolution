@@ -9,7 +9,7 @@ public class SteamPos : BlockPos
 
     // NOTE: this grid represents which voxels
     // of this block are occupied by steam
-    public byte[,,]? steamGrid;
+    public bool[,,]? steamGrid;
 
     public int? countOccupied()
     {
@@ -18,10 +18,10 @@ public class SteamPos : BlockPos
             return null;
         }
 
-        return steamGrid.Cast<byte>().Count(x => x != 0);
+        return steamGrid.Cast<bool>().Count(x => x == true);
     }
 
-    private SteamPos(int x, int y, int z, bool isFullBlock, byte[,,]? steamGrid)
+    private SteamPos(int x, int y, int z, bool isFullBlock, bool[,,]? steamGrid)
         : base(x, y, z)
     {
         this.isFullBlock = isFullBlock;
@@ -33,7 +33,7 @@ public class SteamPos : BlockPos
         return new SteamPos(pos.X, pos.Y, pos.Z, true, null);
     }
 
-    public static SteamPos ChsldFromBlockPos(BlockPos pos, byte[,,] steamGrid)
+    public static SteamPos ChsldFromBlockPos(BlockPos pos, bool[,,] steamGrid)
     {
         return new SteamPos(pos.X, pos.Y, pos.Z, false, steamGrid);
     }
@@ -43,12 +43,12 @@ public class SteamPos : BlockPos
         return new SteamPos(x, y, z, true, null);
     }
 
-    public static SteamPos ChsldFromXYZ(int x, int y, int z, byte[,,] steamGrid)
+    public static SteamPos ChsldFromXYZ(int x, int y, int z, bool[,,] steamGrid)
     {
         return new SteamPos(x, y, z, false, steamGrid);
     }
 
-    public void SetGrid(byte[,,] steamGrid)
+    public void SetGrid(bool[,,] steamGrid)
     {
         this.steamGrid = steamGrid;
     }
