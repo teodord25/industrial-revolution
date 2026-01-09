@@ -83,7 +83,7 @@ internal partial class EntitySteam : EntityAgent
         // later add some kind of mechanic where you could place water into a
         // chiseled block and just do a "where would falling water collect" and
         // fill the containers with fake water and set those as the steam source
-        var root = this.Pos.AsBlockPos;
+        var root = SteamPos.FromBlockPos(true, this.Pos.AsBlockPos);
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
         if (this.to_check.Count == 0) this.to_check.Enqueue(root);
@@ -100,6 +100,8 @@ internal partial class EntitySteam : EntityAgent
                 Block neighBlock = World.BlockAccessor.GetBlock(neigh);
 
                 if (this.occupied.Contains(neigh)) continue;
+
+                SteamPos steampos = SteamPos.FromBlockPos(true, neigh);
 
                 BlockEntity neighBE = this
                     .Api
@@ -118,10 +120,11 @@ internal partial class EntitySteam : EntityAgent
                     var blockIds = beMicroBlock.BlockIds;
                     // this.ExpandThroughChiseled(beMicroBlock);
 
-                    this.chiseled.Add(neigh);
+                    steampos = SteamPos.FromBlockPos(false, neigh);
                 }
                 else
-                { // if not blockentity and not air; skip
+                {
+                    // if not blockentity and not air; skip
                     if (neighBlock.Id != 0) continue;
                 }
 
@@ -130,7 +133,7 @@ internal partial class EntitySteam : EntityAgent
                 // container be enough to allow for pistons and so on?
                 // (changing shapes)
 
-                this.occupied.Add(neigh);
+                this.occupied.Add(steampos);
                 this.to_check.Enqueue(neigh);
             }
         }

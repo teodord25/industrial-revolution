@@ -9,8 +9,7 @@ namespace IndustrialRevolution.Entities;
 
 internal partial class EntitySteam : EntityAgent
 {
-    private HashSet<BlockPos> chiseled = new HashSet<BlockPos>();
-    private HashSet<BlockPos> occupied = new HashSet<BlockPos>();
+    private HashSet<SteamPos> occupied = new HashSet<SteamPos>();
     private Queue<BlockPos> to_check = new Queue<BlockPos>();
 
     private SteamVolume volume = SteamVolume.FromVoxels(0);
