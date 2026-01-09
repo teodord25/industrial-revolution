@@ -90,7 +90,7 @@ internal partial class EntitySteam : EntityAgent
 
         while (
             occupied.Count < this.maxVol?.AsBlocks() &&
-            this.to_check.Count() > 0
+            this.to_check.Count > 0
         )
         {
             var curr = this.to_check.Dequeue();
