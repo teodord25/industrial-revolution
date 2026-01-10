@@ -27,9 +27,12 @@ internal partial class EntitySteam : EntityAgent
         Queue<(int, int, int)> to_checkVoxels = new Queue<(int, int, int)>();
         bool[,,] steamGrid = new bool[16, 16, 16];
 
-        foreach ((int, int, int) hole in holes)
+        foreach ((int x, int y, int z) hole in holes)
         {
-            if (!occupiedVoxels.Contains(hole)) occupiedVoxels.Add(hole);
+            if (!occupiedVoxels.Contains(hole)) {
+                occupiedVoxels.Add(hole);
+                steamGrid[hole.x, hole.y, hole.z] = true;
+            }
             if (!to_checkVoxels.Contains(hole)) to_checkVoxels.Enqueue(hole);
         }
 
@@ -49,12 +52,9 @@ internal partial class EntitySteam : EntityAgent
                     continue;  // skip out of bound neighbours
                 }
 
-                byte neighMatId = voxelGrid[neigh.x, neigh.y, neigh.z];
+                if (occupiedVoxels.Contains(neigh)) continue;
 
-                if (occupiedVoxels.Contains(neigh))
-                {
-                    continue;
-                }
+                byte neighMatId = voxelGrid[neigh.x, neigh.y, neigh.z];
 
                 // if not air skip
                 if (neighMatId != 0) continue;
