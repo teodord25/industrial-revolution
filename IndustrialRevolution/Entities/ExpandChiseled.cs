@@ -19,7 +19,7 @@ internal partial class EntitySteam : EntityAgent
 
         foreach (uint cuboid in cuboids)
         {
-            var (x1, y1, z1, x2, y2, z2, matId) = DecodeVoxel(cuboid, blkIds);
+            var (x1, y1, z1, x2, y2, z2, matId) = DecodeVoxel(cuboid);
 
             for (int x = x1; x <= x2; x++)
             {
@@ -42,7 +42,7 @@ internal partial class EntitySteam : EntityAgent
         int x1, int y1, int z1,
         int x2, int y2, int z2,
         byte materialIndex
-    ) DecodeVoxel(uint encoded, int[] blockIds)
+    ) DecodeVoxel(uint encoded)
     {
         // unpack nibbles into coords
         int x1 = (int)((encoded >> 0) & 0xF);
