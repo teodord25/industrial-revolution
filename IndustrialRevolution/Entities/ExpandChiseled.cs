@@ -1,7 +1,10 @@
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
+using System.Linq;
+
 using System.Collections.Generic;
+using System;
 
 namespace IndustrialRevolution.Entities;
 
@@ -10,12 +13,73 @@ namespace IndustrialRevolution.Entities;
 // a second steam entity
 internal partial class EntitySteam : EntityAgent
 {
+    // TODO: switch to (int, int, int) instead of (int, int, int) for clarity maybe
+    // TODO: use named tupe (int x, int y, int z) everywhere
+    private bool[,,] ExpandChiseled(byte[,,] voxelGrid, List<(int, int, int)> holes)
+    {
+        // TODO: maybe rework this to not use the hashset at all
+        int freeVoxelsInBlock = voxelGrid
+            .Cast<byte>()
+            .Where(v => v == 0)
+            .Count();
+
+        HashSet<(int, int, int)> occupiedVoxels = new HashSet<(int, int, int)>();
+        Queue<(int, int, int)> to_checkVoxels = new Queue<(int, int, int)>();
+        bool[,,] steamGrid = new bool[16, 16, 16];
+
+        foreach ((int, int, int) hole in holes)
+        {
+            if (!occupiedVoxels.Contains(hole)) occupiedVoxels.Add(hole);
+            if (!to_checkVoxels.Contains(hole)) to_checkVoxels.Enqueue(hole);
+        }
+
+        while (
+            occupiedVoxels.Count < freeVoxelsInBlock &&
+            to_checkVoxels.Count > 0
+        )
+        {
+            var curr = to_checkVoxels.Dequeue();
+
+            foreach ((int x, int y, int z) neigh in this.NeighborVoxels(curr))
+            {
+                if (neigh.x < 0 || neigh.x >= 16 ||
+                    neigh.y < 0 || neigh.y >= 16 ||
+                    neigh.z < 0 || neigh.z >= 16)
+                {
+                    continue;  // skip out of bound neighbours
+                }
+
+                byte neighMatId = voxelGrid[neigh.x, neigh.y, neigh.z];
+
+                if (occupiedVoxels.Contains(neigh))
+                {
+                    continue;
+                }
+
+                // if not air skip
+                if (neighMatId != 0) continue;
+
+                occupiedVoxels.Add(neigh);
+                to_checkVoxels.Enqueue(neigh);
+
+                steamGrid[neigh.x, neigh.y, neigh.z] = true;
+            }
+        }
+
+        log?.Debug($"steamgrid: {steamGrid.Cast<bool>().Where(v => v == true).Count()}");
+
+        int currentVersion = WatchedAttributes.GetInt("steamShapeVersion", 0);
+        WatchedAttributes.SetInt("steamShapeVersion", currentVersion + 1);
+        WatchedAttributes.MarkPathDirty("steamShapeVersion");
+
+        return steamGrid;
+    }
+
     private byte[,,] GetVoxelGrid(BlockEntityMicroBlock beMicroBlock)
     {
         byte[,,] voxelGrid = new byte[16, 16, 16];
 
         List<uint> cuboids = beMicroBlock.VoxelCuboids;
-        var blkIds = beMicroBlock.BlockIds;
 
         foreach (uint cuboid in cuboids)
         {

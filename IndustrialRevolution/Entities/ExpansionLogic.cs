@@ -29,6 +29,22 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
+    private (int, int, int)[] NeighborVoxels((int, int, int) pos)
+    {
+        (int, int, int)[] neighbors = new (int, int, int)[6];
+
+        var (x, y, z) = pos;
+
+        neighbors[0] = (x + 1, y, z);
+        neighbors[1] = (x - 1, y, z);
+        neighbors[2] = (x, y + 1, z);
+        neighbors[3] = (x, y - 1, z);
+        neighbors[4] = (x, y, z + 1);
+        neighbors[5] = (x, y, z - 1);
+
+        return neighbors;
+    }
+
     private (EnumAxis, int) GetCoordinateStartForFace(BlockFacing face)
     {
         if (face == BlockFacing.NORTH) return (EnumAxis.Z, 0);
@@ -41,7 +57,7 @@ internal partial class EntitySteam : EntityAgent
         return (EnumAxis.Y, 15);
     }
 
-    private bool PassableFace(byte[,,] voxelGrid, BlockPos from, BlockPos to)
+    private List<(int, int, int)> HolesInFace(byte[,,] voxelGrid, BlockPos from, BlockPos to)
     {
         BlockFacing face = BlockFacing.FromVector(
             to.X - from.X,
@@ -51,31 +67,31 @@ internal partial class EntitySteam : EntityAgent
 
         (EnumAxis axis, int const_val) = GetCoordinateStartForFace(face);
 
-        List<int[]> holes = new List<int[]>();
+        List<(int, int, int)> holes = new List<(int, int, int)>();
 
         for (int i = 0; i < 16; i++)
         {
             for (int j = 0; j < 16; j++)
             {
                 byte voxel = 0;
-                int[] pos = { };
-
-                if (axis == EnumAxis.X) pos = [const_val, i, j];
-                if (axis == EnumAxis.Y) pos = [i, const_val, j];
-                if (axis == EnumAxis.Z) pos = [i, j, const_val];
-
-                voxel = voxelGrid[pos[0], pos[1], pos[2]];
+                var pos = axis switch
+                {
+                    EnumAxis.X => (const_val, i, j),
+                    EnumAxis.Y => (i, const_val, j),
+                    EnumAxis.Z => (i, j, const_val),
+                    _ => throw new ArgumentException($"Invalid axis: {axis}")
+                };
+                voxel = voxelGrid[pos.Item1, pos.Item2, pos.Item3];
 
                 if (voxel == 0) holes.Add(pos);
             }
         }
 
-        if (holes.Count > 0) return true;
-
-        return false;
+        return holes;
     }
 
     // TODO: simplify
+    // TODO: switch to (int x, int y, int z) instead of int[] for clarity
     public void ExpandSteam()
     {
         // TODO: check if root is fullblock
@@ -83,13 +99,13 @@ internal partial class EntitySteam : EntityAgent
         // later add some kind of mechanic where you could place water into a
         // chiseled block and just do a "where would falling water collect" and
         // fill the containers with fake water and set those as the steam source
-        var root = SteamPos.FromBlockPos(true, this.Pos.AsBlockPos);
+        var root = SteamPos.SolidFromBlockPos(this.Pos.AsBlockPos);
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
         if (this.to_check.Count == 0) this.to_check.Enqueue(root);
 
         while (
-            occupied.Count < this.maxVol?.AsBlocks() &&
+            this.occupied.Count < this.maxVol?.AsBlocks() &&
             this.to_check.Count > 0
         )
         {
@@ -101,7 +117,7 @@ internal partial class EntitySteam : EntityAgent
 
                 if (this.occupied.Contains(neigh)) continue;
 
-                SteamPos steampos = SteamPos.FromBlockPos(true, neigh);
+                SteamPos steampos = SteamPos.SolidFromBlockPos(neigh);
 
                 BlockEntity neighBE = this
                     .Api
@@ -112,15 +128,15 @@ internal partial class EntitySteam : EntityAgent
                 if (neighBE is BlockEntityMicroBlock beMicroBlock)
                 {
                     var voxelGrid = GetVoxelGrid(beMicroBlock);
-                    if (this.PassableFace(voxelGrid, curr, neigh))
-                    { log?.Debug("OH YEAH"); }
-                    else { log?.Debug("bruhhhhhh"); }
 
-                    List<uint> cuboids = beMicroBlock.VoxelCuboids;
-                    var blockIds = beMicroBlock.BlockIds;
-                    // this.ExpandThroughChiseled(beMicroBlock);
+                    List<(int, int, int)> holes = HolesInFace(
+                        voxelGrid, curr, neigh
+                    );
 
-                    steampos = SteamPos.FromBlockPos(false, neigh);
+                    if (holes.Count == 0) continue;
+
+                    bool[,,] steamGrid = this.ExpandChiseled(voxelGrid, holes);
+                    steampos = SteamPos.ChsldFromBlockPos(neigh, steamGrid);
                 }
                 else
                 {
@@ -138,17 +154,62 @@ internal partial class EntitySteam : EntityAgent
             }
         }
 
-        int[] coords = this.occupied
-            .SelectMany(pos => new[] { pos.X, pos.Y, pos.Z })
-            .ToArray();
+        int fullBlocks = this.occupied.Where(o => o.isFullBlock).Count();
+        int chiseledBlks = this.occupied.Where(o => !o.isFullBlock).Count();
 
-        byte[] voxels = SerializerUtil.Serialize(coords);
+        SteamVolume? steamVol = SteamVolume.FromBlocks(fullBlocks);
+        if (steamVol == null)
+            log?.Error("computing full blocks volume went wrong");
 
-        WatchedAttributes.SetBytes("steamOccupied", voxels);
-        WatchedAttributes.MarkPathDirty("steamOccupied");
+        SteamVolume chiseledVol = SteamVolume.FromVoxels(
+            this.occupied.Where(o => !o.isFullBlock)
+            .Select(o => o.countOccupied().GetValueOrDefault(0))
+            .Sum()
+        );
+
+        steamVol?.AddVoxels(chiseledVol.AsVoxels());
 
         WatchedAttributes.SetInt("steamVolume", this.occupied.Count);
         WatchedAttributes.MarkPathDirty("steamVolume");
+
+        List<int> coordsFull = new List<int>();
+        List<byte> chiselGrids = new List<Byte>();
+
+        List<SteamPos> occupiedList = this.occupied.ToList();
+
+        for (int i = 0; i < this.occupied.Count; i++)
+        {
+            var pos = occupiedList[i];
+
+            coordsFull.AddRange([pos.X, pos.Y, pos.Z]);
+            if (!pos.isFullBlock)
+            {
+                if (pos.steamGrid == null)
+                {
+                    var lcl = pos.ToLocalPosition(this.Api);
+                    log?.Warning($"chiseled ({lcl.X}, {lcl.Y}, {lcl.Z}) has no grid");
+                    continue;
+                }
+
+                byte[] index = BitConverter.GetBytes(i);
+                chiselGrids.AddRange(index);
+
+                byte[] serializedGrid = new byte[16 * 16 * 16];
+                Buffer.BlockCopy(pos.steamGrid, 0, serializedGrid, 0, 4096);
+
+                chiselGrids.AddRange(serializedGrid);
+            }
+        }
+
+        byte[] steamOccupied = SerializerUtil.Serialize(coordsFull);
+
+        WatchedAttributes.SetBytes("steamOccupied", steamOccupied);
+        WatchedAttributes.MarkPathDirty("steamOccupied");
+
+        byte[] chiselOccupied = chiselGrids.ToArray();
+
+        WatchedAttributes.SetBytes("chiseledSteam", chiselOccupied);
+        WatchedAttributes.MarkPathDirty("chiseledSteam");
 
         int currentVersion = WatchedAttributes.GetInt("steamShapeVersion", 0);
         WatchedAttributes.SetInt("steamShapeVersion", currentVersion + 1);

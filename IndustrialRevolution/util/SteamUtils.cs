@@ -28,4 +28,10 @@ public class SteamUtils
 
         return sb.ToString();
     }
+
+    public static string PosAsLocal<T>(
+        T pos, Vintagestory.API.Common.ICoreAPI api
+    ) where T : BlockPos {
+        return pos.ToLocalPosition(api).ToString();
+    }
 }
