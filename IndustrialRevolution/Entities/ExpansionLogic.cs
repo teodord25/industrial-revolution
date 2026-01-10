@@ -113,9 +113,9 @@ internal partial class EntitySteam : EntityAgent
 
             foreach (BlockPos neigh in this.NeighborPositions(curr))
             {
-                Block neighBlock = World.BlockAccessor.GetBlock(neigh);
-
                 if (this.occupied.Contains(neigh)) continue;
+
+                Block neighBlock = World.BlockAccessor.GetBlock(neigh);
 
                 SteamPos steampos = SteamPos.SolidFromBlockPos(neigh);
 
