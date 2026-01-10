@@ -1,10 +1,12 @@
 using System.Text;
+using System;
+using Vintagestory.API.MathTools;
 
 namespace IndustrialRevolution.util;
 
 public class SteamUtils
 {
-    public static string GridToString<T>(T[,,] array)
+    public static string GridToString<T>(T[,,] array) where T : IConvertible
     {
         var sb = new StringBuilder();
         sb.AppendLine($"VOXEL PRINTER GO BRR");
@@ -16,10 +18,12 @@ public class SteamUtils
                 sb.Append("  [");
                 for (int k = 0; k < 16; k++)
                 {
+                    var val = array[k, i, j].ToByte(null);
+
                     // NOTE: swapped around ijk to align printing such that Y is
                     // the layers, Z is the rows, X is the elements (basically
                     // just aligned it with world axes)
-                    sb.Append($"{array[k, i, j], 2}");
+                    sb.Append($"{val, 2}");
                     if (k < 15) sb.Append(",");
                 }
                 sb.AppendLine("]");
