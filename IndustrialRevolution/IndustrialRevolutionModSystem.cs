@@ -28,10 +28,6 @@ public class IndustrialRevolutionModSystem : ModSystem
         api.RegisterEntity(Mod.Info.ModID + "." + "entitysteam", typeof(EntitySteam));
         api.RegisterBlockEntityClass(Mod.Info.ModID + "." + "entityboiler", typeof(BlockEntityBoiler));
 
-        api.Network
-            .RegisterChannel("steam-occupied")
-            .RegisterMessageType<HashSet<BlockPos>>();
-
         api.World.Logger.Event("started 'Industrial Revolution' mod");
     }
 }
