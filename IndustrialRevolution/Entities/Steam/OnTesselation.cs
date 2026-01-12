@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using System;
 
-namespace IndustrialRevolution.Entities;
+namespace IndustrialRevolution.Entities.Steam;
 
 internal partial class EntitySteam : EntityAgent
 {

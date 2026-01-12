@@ -1,4 +1,4 @@
-namespace IndustrialRevolution.Entities;
+namespace IndustrialRevolution.Entities.Steam;
 
 public class SteamVolume
 {

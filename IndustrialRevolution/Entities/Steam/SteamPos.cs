@@ -2,7 +2,8 @@ using Vintagestory.API.MathTools;
 
 using System.Linq;
 
-namespace IndustrialRevolution.Entities;
+namespace IndustrialRevolution.Entities.Steam;
+
 public class SteamPos : BlockPos
 {
     public bool isFullBlock;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 
-namespace IndustrialRevolution.Entities;
+namespace IndustrialRevolution.Entities.Steam;
 
 // TODO: add some kind of collision detection or use repulse agent or something
 // to decide when a valve or something can cut off part of the steam and create

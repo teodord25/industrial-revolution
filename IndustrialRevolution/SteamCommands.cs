@@ -1,7 +1,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Server;
-using IndustrialRevolution.Entities;
+using IndustrialRevolution.Entities.Steam;
 using IndustrialRevolution.util;
 
 namespace IndustrialRevolution;

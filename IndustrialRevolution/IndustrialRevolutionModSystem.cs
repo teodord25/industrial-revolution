@@ -5,7 +5,7 @@ using Vintagestory.API.MathTools;
 using IndustrialRevolution.util;
 using IndustrialRevolution.Blocks;
 using IndustrialRevolution.BlockEntities;
-using IndustrialRevolution.Entities;
+using IndustrialRevolution.Entities.Steam;
 
 namespace IndustrialRevolution;
 
