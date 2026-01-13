@@ -11,7 +11,6 @@ internal partial class EntitySteam : EntityAgent
 {
     // TODO: only draw edge voxels, somehow, maybe through toCheck or something
     // because drawing in occluded voxels for chiseled blocks could get crazy...
-    // TODO: check if steamPos here properly does contains by val or not
     public HashSet<SteamPos> GetOccupied()
     {
         byte[] posData = WatchedAttributes.GetBytes("steamOccupied");
