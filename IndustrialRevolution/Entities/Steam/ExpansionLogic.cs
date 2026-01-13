@@ -91,7 +91,6 @@ internal partial class EntitySteam : EntityAgent
     }
 
     // TODO: simplify
-    // TODO: switch to (int x, int y, int z) instead of int[] for clarity
     public void ExpandSteam()
     {
         // TODO: check if root is fullblock

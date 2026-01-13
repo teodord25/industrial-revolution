@@ -17,17 +17,10 @@ internal partial class EntitySteam : EntityAgent
         byte[] posData = WatchedAttributes.GetBytes("steamOccupied");
         if (posData == null) return new HashSet<SteamPos>();
 
-        int[] coords = SerializerUtil.Deserialize<int[]>(posData);
+        (int x, int y, int z) coords = SerializerUtil.Deserialize<(int, int, int)>(posData);
         List<SteamPos> positions = new List<SteamPos>();
 
-        for (int i = 0; i < coords.Length; i += 3)
-        {
-            int x = coords[i];
-            int y = coords[i + 1];
-            int z = coords[i + 2];
-
-            positions.Add(SteamPos.SolidFromXYZ(x, y, z));
-        }
+        positions.Add(SteamPos.SolidFromXYZ(coords.x, coords.y, coords.z));
 
         byte[] chslData = WatchedAttributes.GetBytes("chiseledSteam");
         for (int i = 0; i < chslData.Length; i += 4 + 4096)
