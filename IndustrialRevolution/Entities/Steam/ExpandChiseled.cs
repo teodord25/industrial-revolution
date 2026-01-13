@@ -33,7 +33,8 @@ internal partial class EntitySteam : EntityAgent
 
         foreach ((int x, int y, int z) hole in holes)
         {
-            if (!occupiedVoxels.Contains(hole)) {
+            if (!occupiedVoxels.Contains(hole))
+            {
                 occupiedVoxels.Add(hole);
                 steamGrid[hole.x, hole.y, hole.z] = true;
             }
