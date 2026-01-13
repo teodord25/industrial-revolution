@@ -29,9 +29,9 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
-    private (int, int, int)[] NeighborVoxels((int, int, int) pos)
+    private (int x, int y, int z)[] NeighborVoxels((int x, int y, int z) pos)
     {
-        (int, int, int)[] neighbors = new (int, int, int)[6];
+        (int x, int y, int z)[] neighbors = new (int x, int y, int z)[6];
 
         var (x, y, z) = pos;
 
@@ -57,7 +57,9 @@ internal partial class EntitySteam : EntityAgent
         return (EnumAxis.Y, 15);
     }
 
-    private List<(int, int, int)> HolesInFace(byte[,,] voxelGrid, BlockPos from, BlockPos to)
+    private List<(int x, int y, int z)> HolesInFace(
+        byte[,,] voxelGrid, BlockPos from, BlockPos to
+    )
     {
         BlockFacing face = BlockFacing.FromVector(
             to.X - from.X,
@@ -67,7 +69,7 @@ internal partial class EntitySteam : EntityAgent
 
         (EnumAxis axis, int const_val) = GetCoordinateStartForFace(face);
 
-        List<(int, int, int)> holes = new List<(int, int, int)>();
+        List<(int x, int y, int z)> holes = new List<(int x, int y, int z)>();
 
         for (int i = 0; i < 16; i++)
         {
@@ -128,7 +130,7 @@ internal partial class EntitySteam : EntityAgent
                 {
                     var voxelGrid = GetVoxelGrid(beMicroBlock);
 
-                    List<(int, int, int)> holes = HolesInFace(
+                    List<(int x, int y, int z)> holes = HolesInFace(
                         voxelGrid, curr, neigh
                     );
 

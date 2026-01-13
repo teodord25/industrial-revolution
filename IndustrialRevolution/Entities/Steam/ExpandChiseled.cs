@@ -13,9 +13,9 @@ namespace IndustrialRevolution.Entities.Steam;
 // a second steam entity
 internal partial class EntitySteam : EntityAgent
 {
-    // TODO: switch to (int, int, int) instead of (int, int, int) for clarity maybe
-    // TODO: use named tupe (int x, int y, int z) everywhere
-    private bool[,,] ExpandChiseled(byte[,,] voxelGrid, List<(int, int, int)> holes)
+    private bool[,,] ExpandChiseled(
+        byte[,,] voxelGrid, List<(int x, int y, int z)> holes
+    )
     {
         // TODO: maybe rework this to not use the hashset at all
         int freeVoxelsInBlock = voxelGrid
@@ -23,8 +23,12 @@ internal partial class EntitySteam : EntityAgent
             .Where(v => v == 0)
             .Count();
 
-        HashSet<(int, int, int)> occupiedVoxels = new HashSet<(int, int, int)>();
-        Queue<(int, int, int)> to_checkVoxels = new Queue<(int, int, int)>();
+        HashSet<(int x, int y, int z)> occupiedVoxels =
+            new HashSet<(int x, int y, int z)>();
+
+        Queue<(int x, int y, int z)> to_checkVoxels =
+            new Queue<(int, int, int)>();
+
         bool[,,] steamGrid = new bool[16, 16, 16];
 
         foreach ((int x, int y, int z) hole in holes)

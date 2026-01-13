@@ -16,7 +16,9 @@ internal partial class EntitySteam : EntityAgent
         byte[] posData = WatchedAttributes.GetBytes("steamOccupied");
         if (posData == null) return new HashSet<SteamPos>();
 
-        (int x, int y, int z) coords = SerializerUtil.Deserialize<(int, int, int)>(posData);
+        (int x, int y, int z) coords = SerializerUtil
+            .Deserialize<(int x, int y, int z)>(posData);
+
         List<SteamPos> positions = new List<SteamPos>();
 
         positions.Add(SteamPos.SolidFromXYZ(coords.x, coords.y, coords.z));
