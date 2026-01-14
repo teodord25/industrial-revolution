@@ -1,6 +1,4 @@
 ﻿using Vintagestory.API.Common;
-using System.Collections.Generic;
-using Vintagestory.API.MathTools;
 
 using IndustrialRevolution.util;
 using IndustrialRevolution.Blocks;
@@ -28,7 +26,7 @@ public class IndustrialRevolutionModSystem : ModSystem
         api.RegisterEntity(Mod.Info.ModID + "." + "entitysteam", typeof(EntitySteam));
     }
 
-    private void RegiterBlockEntities(ICoreAPI api) {
+    private void RegisterBlockEntities(ICoreAPI api) {
         api.RegisterBlockEntityClass(Mod.Info.ModID + "." + "entityboiler", typeof(BlockEntityBoiler));
     }
 
@@ -38,7 +36,7 @@ public class IndustrialRevolutionModSystem : ModSystem
 
         this.RegisterComplexEntities(api);
         this.RegisterComplexBlocks(api);
-        this.RegiterBlockEntities(api);
+        this.RegisterBlockEntities(api);
 
         api.World.Logger.Event("started 'Industrial Revolution' mod");
     }
