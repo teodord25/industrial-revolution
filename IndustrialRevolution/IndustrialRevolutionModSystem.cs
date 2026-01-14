@@ -36,6 +36,10 @@ public class IndustrialRevolutionModSystem : ModSystem
     {
         base.Start(api);
 
+        this.RegisterComplexEntities(api);
+        this.RegisterComplexBlocks(api);
+        this.RegiterBlockEntities(api);
+
         api.World.Logger.Event("started 'Industrial Revolution' mod");
     }
 }
