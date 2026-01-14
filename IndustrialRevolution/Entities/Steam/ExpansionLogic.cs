@@ -103,14 +103,14 @@ internal partial class EntitySteam : EntityAgent
         var root = SteamPos.SolidFromBlockPos(this.Pos.AsBlockPos);
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
-        if (this.to_check.Count == 0) this.to_check.Enqueue(root);
+        if (this.toCheck.Count == 0) this.toCheck.Enqueue(root);
 
         while (
             this.occupied.Count < this.maxVol?.AsBlocks() &&
-            this.to_check.Count > 0
+            this.toCheck.Count > 0
         )
         {
-            var curr = this.to_check.Dequeue();
+            var curr = this.toCheck.Dequeue();
 
             foreach (BlockPos neigh in this.NeighborPositions(curr))
             {
@@ -151,7 +151,7 @@ internal partial class EntitySteam : EntityAgent
                 // (changing shapes)
 
                 this.occupied.Add(steampos);
-                this.to_check.Enqueue(neigh);
+                this.toCheck.Enqueue(neigh);
             }
         }
 
