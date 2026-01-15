@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <VintageStoryPath Condition="'$(VintageStoryPath)' == ''">$(VINTAGE_STORY)</VintageStoryPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IndustrialRevolution\IndustrialRevolution.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyVintagestoryDlls" AfterTargets="Build">
+    <ItemGroup>
+      <VSDlls Include="$(VINTAGE_STORY)/*.dll" />
+      <VSDlls Include="$(VINTAGE_STORY)/Lib/*.dll" />
+      <VSDlls Include="$(VINTAGE_STORY)/Mods/*.dll" />
+    </ItemGroup>
+    <Message Text="Copying VS DLLs from: $(VINTAGE_STORY)" Importance="high" />
+    <Copy SourceFiles="@(VSDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
