@@ -126,13 +126,19 @@ internal partial class EntitySteam : EntityAgent
 
         foreach (var pos in occupied)
         {
-            if (!pos.isFullBlock)
+            if (!pos.IsFullBlock)
             {
-                if (pos.steamGrid == null) log?.Warning("non fullblock has no steam grid");
+                if (pos.SteamGrid == null)
+                {
+                    log?.Warning(
+                        $"non fullblock {pos.ToLocalCoords()}" +
+                        " has no steam grid"
+                    );
+                    continue;
+                }
 
-                log?.Debug("chussy: " + util.SteamUtils.PosAsLocal(pos, this.Api));
                 this.fillVoxels(
-                    pos.steamGrid, pos, root,
+                    pos.SteamGrid, pos, root,
                     voxShape, capi, voxShapeLoc,
                     ref entityShape, shapePathForLogging, ref shapeIsCloned
                 );
@@ -142,12 +148,17 @@ internal partial class EntitySteam : EntityAgent
                 voxShape = voxShape.Clone(); // make a copy
 
                 // position the copy
-                for (int i = 0; i < 3; i++)
-                {
-                    float offset = pos[i] - root[i];
-                    voxShape.Elements[0].From[i] = offset * 16;
-                    voxShape.Elements[0].To[i] = (offset + 1) * 16;
-                }
+                int offsetX = (pos.X - root.X);
+                int offsetY = (pos.Y - root.Y);
+                int offsetZ = (pos.Z - root.Z);
+
+                voxShape.Elements[0].From[0] = offsetX * 16;
+                voxShape.Elements[0].From[1] = offsetY * 16;
+                voxShape.Elements[0].From[2] = offsetZ * 16;
+
+                voxShape.Elements[0].To[0] = (offsetX + 1) * 16;
+                voxShape.Elements[0].To[1] = (offsetY + 1) * 16;
+                voxShape.Elements[0].To[2] = (offsetZ + 1) * 16;
 
                 // bake it into the parent
                 this.bake(

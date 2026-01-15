@@ -1,6 +1,5 @@
 using Vintagestory.API.Common;
 using System.Linq;
-using Vintagestory.API.Util;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -11,25 +10,7 @@ namespace IndustrialRevolution.Entities.Steam;
 
 internal partial class EntitySteam : EntityAgent
 {
-    private BlockPos[] NeighborPositions(BlockPos pos)
-    {
-        BlockPos[] neighbors = new BlockPos[6];
-
-        int n = 0;
-
-        // TODO: do LINQ here maybe
-        foreach (BlockFacing facing in BlockFacing.ALLFACES)
-        {
-            BlockPos neighbor = pos.AddCopy(facing);
-
-            neighbors[n] = neighbor;
-            n++;
-        }
-
-        return neighbors;
-    }
-
-    private (int x, int y, int z)[] NeighborVoxels((int x, int y, int z) pos)
+    private (int x, int y, int z)[] GetNeighbors((int x, int y, int z) pos)
     {
         (int x, int y, int z)[] neighbors = new (int x, int y, int z)[6];
 
@@ -45,6 +26,17 @@ internal partial class EntitySteam : EntityAgent
         return neighbors;
     }
 
+    private (int x, int y, int z)[] NeighborVoxels((int x, int y, int z) pos)
+    {
+        (int x, int y, int z)[] neighbors = this.GetNeighbors(pos);
+
+        return neighbors
+            .Where(n => n.x >= 0 && n.x < 16)
+            .Where(n => n.y >= 0 && n.y < 16)
+            .Where(n => n.z >= 0 && n.z < 16)
+            .ToArray();
+    }
+
     private (EnumAxis, int) GetCoordinateStartForFace(BlockFacing face)
     {
         if (face == BlockFacing.NORTH) return (EnumAxis.Z, 0);
@@ -58,13 +50,15 @@ internal partial class EntitySteam : EntityAgent
     }
 
     private List<(int x, int y, int z)> HolesInFace(
-        byte[,,] voxelGrid, BlockPos from, BlockPos to
+        byte[,,] voxelGrid,
+        (int x, int y, int z) from,
+        (int x, int y, int z) to
     )
     {
         BlockFacing face = BlockFacing.FromVector(
-            to.X - from.X,
-            to.Y - from.Y,
-            to.Z - from.Z
+            to.x - from.x,
+            to.y - from.y,
+            to.z - from.z
         ).Opposite;
 
         (EnumAxis axis, int const_val) = GetCoordinateStartForFace(face);
@@ -100,10 +94,18 @@ internal partial class EntitySteam : EntityAgent
         // later add some kind of mechanic where you could place water into a
         // chiseled block and just do a "where would falling water collect" and
         // fill the containers with fake water and set those as the steam source
-        var root = SteamPos.SolidFromBlockPos(this.Pos.AsBlockPos);
+
+        (int x, int y, int z) rootPos = (
+            this.Pos.AsBlockPos.X,
+            this.Pos.AsBlockPos.Y,
+            this.Pos.AsBlockPos.Z
+        );
+
+        var root = new SteamPos
+        { X = rootPos.x, Y = rootPos.y, Z = rootPos.z, IsFullBlock = true };
 
         if (this.occupied.Count == 0) this.occupied.Add(root);
-        if (this.toCheck.Count == 0) this.toCheck.Enqueue(root);
+        if (this.toCheck.Count == 0) this.toCheck.Enqueue(rootPos);
 
         while (
             this.occupied.Count < this.maxVol?.AsBlocks() &&
@@ -112,59 +114,71 @@ internal partial class EntitySteam : EntityAgent
         {
             var curr = this.toCheck.Dequeue();
 
-            foreach (BlockPos neigh in this.NeighborPositions(curr))
+            foreach (
+                (int x, int y, int z) neighPos in this.GetNeighbors(curr)
+            )
             {
-                if (this.occupied.Contains(neigh)) continue;
+                SteamPos neighSteam = SteamPosFactory.SolidFromTuple(neighPos);
 
-                Block neighBlock = World.BlockAccessor.GetBlock(neigh);
+                if (this.occupied.Contains(neighSteam)) continue;
 
-                SteamPos steampos = SteamPos.SolidFromBlockPos(neigh);
+                BlockPos blkPos = new BlockPos(
+                    neighPos.x, neighPos.y, neighPos.z
+                );
+                Block neighBlock = World
+                    .BlockAccessor
+                    .GetBlock(blkPos);
 
                 BlockEntity neighBE = this
                     .Api
                     .World
                     .BlockAccessor
-                    .GetBlockEntity(neigh);
+                    .GetBlockEntity(blkPos);
 
                 if (neighBE is BlockEntityMicroBlock beMicroBlock)
                 {
+                    log?.Debug("is be");
+                    // if chiseled, add chiseled
                     var voxelGrid = GetVoxelGrid(beMicroBlock);
 
                     List<(int x, int y, int z)> holes = HolesInFace(
-                        voxelGrid, curr, neigh
+                        voxelGrid, curr, neighPos
                     );
 
                     if (holes.Count == 0) continue;
 
                     bool[,,] steamGrid = this.ExpandChiseled(voxelGrid, holes);
-                    steampos = SteamPos.ChsldFromBlockPos(neigh, steamGrid);
+                    neighSteam = neighSteam with
+                    { IsFullBlock = false, SteamGrid = steamGrid };
                 }
-                else
+                else if (neighBlock.Id != 0)
                 {
-                    // if not blockentity and not air; skip
-                    if (neighBlock.Id != 0) continue;
+                    log?.Debug("is not be, and not air");
+                    continue;
                 }
+
+                log?.Debug($"adding {neighSteam.ToLocalCoords()} crazy style");
+
+                this.occupied.Add(neighSteam);
+                this.toCheck.Enqueue(neighPos);
 
                 // TODO: keep track of these non air blocks for like
                 // container detection. Will knowing the mesh of the
                 // container be enough to allow for pistons and so on?
                 // (changing shapes)
-
-                this.occupied.Add(steampos);
-                this.toCheck.Enqueue(neigh);
             }
         }
 
-        int fullBlocks = this.occupied.Where(o => o.isFullBlock).Count();
-        int chiseledBlks = this.occupied.Where(o => !o.isFullBlock).Count();
+        int fullBlocks = this.occupied.Where(o => o.IsFullBlock).Count();
+        int chiseledBlks = this.occupied.Where(o => !o.IsFullBlock).Count();
 
         SteamVolume? steamVol = SteamVolume.FromBlocks(fullBlocks);
         if (steamVol == null)
             log?.Error("computing full blocks volume went wrong");
 
         SteamVolume chiseledVol = SteamVolume.FromVoxels(
-            this.occupied.Where(o => !o.isFullBlock)
-            .Select(o => o.countOccupied().GetValueOrDefault(0))
+            this.occupied.Where(o => !o.IsFullBlock)
+            .Select(o => o.CountOccupied())
             .Sum()
         );
 
