@@ -16,32 +16,9 @@ internal partial class EntitySteam : EntityAgent
         byte[] posData = WatchedAttributes.GetBytes("steamOccupied");
         if (posData == null) return new HashSet<SteamPos>();
 
-        (int x, int y, int z) coords = SerializerUtil
-            .Deserialize<(int x, int y, int z)>(posData);
-
-        List<SteamPos> positions = new List<SteamPos>();
-
-        positions.Add(SteamPos.SolidFromXYZ(coords.x, coords.y, coords.z));
-
         byte[] chslData = WatchedAttributes.GetBytes("chiseledSteam");
-        for (int i = 0; i < chslData.Length; i += 4 + 4096)
-        {
-            int index = BitConverter.ToInt32(chslData, i);
-            bool[,,] steamGrid = new bool[16, 16, 16];
-            Buffer.BlockCopy(chslData, i + 4, steamGrid, 0, 4096);
 
-            var pos = positions[index];
-            var local = pos.ToLocalPosition(this.Api);
-
-            log?.Debug($"damn: ({index}) {local.X} {local.Z}");
-
-            pos.SetGrid(steamGrid);
-            pos.isFullBlock = false;
-        }
-
-        var steamPositions = new HashSet<SteamPos>(positions);
-
-        return steamPositions;
+        return SteamSerializer.Deserialize(posData, chslData);
     }
 
     private void bake(

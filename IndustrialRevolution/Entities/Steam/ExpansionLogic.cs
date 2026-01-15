@@ -173,41 +173,13 @@ internal partial class EntitySteam : EntityAgent
         WatchedAttributes.SetInt("steamVolume", this.occupied.Count);
         WatchedAttributes.MarkPathDirty("steamVolume");
 
-        List<int> coordsFull = new List<int>();
-        List<byte> chiselGrids = new List<Byte>();
-
         List<SteamPos> occupiedList = this.occupied.ToList();
 
-        for (int i = 0; i < this.occupied.Count; i++)
-        {
-            var pos = occupiedList[i];
-
-            coordsFull.AddRange([pos.X, pos.Y, pos.Z]);
-            if (!pos.isFullBlock)
-            {
-                if (pos.steamGrid == null)
-                {
-                    var lcl = pos.ToLocalPosition(this.Api);
-                    log?.Warning($"chiseled ({lcl.X}, {lcl.Y}, {lcl.Z}) has no grid");
-                    continue;
-                }
-
-                byte[] index = BitConverter.GetBytes(i);
-                chiselGrids.AddRange(index);
-
-                byte[] serializedGrid = new byte[16 * 16 * 16];
-                Buffer.BlockCopy(pos.steamGrid, 0, serializedGrid, 0, 4096);
-
-                chiselGrids.AddRange(serializedGrid);
-            }
-        }
-
-        byte[] steamOccupied = SerializerUtil.Serialize(coordsFull);
+        (byte[] steamOccupied, byte[] chiselOccupied) =
+            SteamSerializer.Serialize(occupiedList);
 
         WatchedAttributes.SetBytes("steamOccupied", steamOccupied);
         WatchedAttributes.MarkPathDirty("steamOccupied");
-
-        byte[] chiselOccupied = chiselGrids.ToArray();
 
         WatchedAttributes.SetBytes("chiseledSteam", chiselOccupied);
         WatchedAttributes.MarkPathDirty("chiseledSteam");
