@@ -95,79 +95,53 @@ internal partial class EntitySteam : EntityAgent
         // chiseled block and just do a "where would falling water collect" and
         // fill the containers with fake water and set those as the steam source
 
-        (int x, int y, int z) rootPos = (
+        (int x, int y, int z) rootXYZ = (
             this.Pos.AsBlockPos.X,
             this.Pos.AsBlockPos.Y,
             this.Pos.AsBlockPos.Z
         );
 
-        var root = new SteamPos
-        { X = rootPos.x, Y = rootPos.y, Z = rootPos.z, IsFullBlock = true };
+        int limit = (int)(this.maxVol?.AsBlocks() ?? 0);
 
-        if (this.occupied.Count == 0) this.occupied.Add(root);
-        if (this.toCheck.Count == 0) this.toCheck.Enqueue(rootPos);
-
-        while (
-            this.occupied.Count < this.maxVol?.AsBlocks() &&
-            this.toCheck.Count > 0
-        )
-        {
-            var curr = this.toCheck.Dequeue();
-
-            foreach (
-                (int x, int y, int z) neighPos in this.GetNeighbors(curr)
-            )
+        util.General.BreadthFirstSearch(
+            this.occupied, this.toCheck, rootXYZ, limit,
+            this.GetNeighbors, SteamPosFactory.SolidFromTuple,
+            (currXYZ, currPos, neighXYZ, neighPos) =>
             {
-                SteamPos neighSteam = SteamPosFactory.SolidFromTuple(neighPos);
-
-                if (this.occupied.Contains(neighSteam)) continue;
-
-                BlockPos blkPos = new BlockPos(
-                    neighPos.x, neighPos.y, neighPos.z
-                );
-                Block neighBlock = World
-                    .BlockAccessor
-                    .GetBlock(blkPos);
-
-                BlockEntity neighBE = this
-                    .Api
-                    .World
-                    .BlockAccessor
-                    .GetBlockEntity(blkPos);
-
-                if (neighBE is BlockEntityMicroBlock beMicroBlock)
+                var (x, y, z) = neighXYZ;
+                BlockPos blkPos = new BlockPos(x, y, z);
+                Block neighBlock = World.BlockAccessor.GetBlock(blkPos);
+                if (
+                    this.Api.World.BlockAccessor.GetBlockEntity(blkPos)
+                    is BlockEntityMicroBlock beMicroBlock
+                )
                 {
-                    log?.Debug("is be");
-                    // if chiseled, add chiseled
                     var voxelGrid = GetVoxelGrid(beMicroBlock);
 
                     List<(int x, int y, int z)> holes = HolesInFace(
-                        voxelGrid, curr, neighPos
+                        voxelGrid,
+                        (currPos.X, currPos.Y, currPos.Z),
+                        (neighPos.X, neighPos.Y, neighPos.Z)
                     );
 
-                    if (holes.Count == 0) continue;
+                    if (holes.Count == 0) return;
 
                     bool[,,] steamGrid = this.ExpandChiseled(voxelGrid, holes);
-                    neighSteam = neighSteam with
+
+                    neighPos = neighPos with
                     { IsFullBlock = false, SteamGrid = steamGrid };
                 }
-                else if (neighBlock.Id != 0)
-                {
-                    log?.Debug("is not be, and not air");
-                    continue;
-                }
+                else if (neighBlock.Id != 0) return;
 
-                log?.Debug($"adding {neighSteam.ToLocalCoords()} crazy style");
-
-                this.occupied.Add(neighSteam);
-                this.toCheck.Enqueue(neighPos);
-
-                // TODO: keep track of these non air blocks for like
-                // container detection. Will knowing the mesh of the
-                // container be enough to allow for pistons and so on?
-                // (changing shapes)
+                this.occupied.Add(neighPos);
+                this.toCheck.Enqueue(neighXYZ);
             }
-        }
+        );
+
+        // TODO: keep track of these non air blocks for like
+        // container detection. Will knowing the mesh of the
+        // container be enough to allow for pistons and so on?
+        // (changing shapes)
 
         int fullBlocks = this.occupied.Where(o => o.IsFullBlock).Count();
         int chiseledBlks = this.occupied.Where(o => !o.IsFullBlock).Count();
