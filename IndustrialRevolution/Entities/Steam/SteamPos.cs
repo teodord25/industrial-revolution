@@ -5,7 +5,7 @@ using Vintagestory.API.MathTools;
 
 namespace IndustrialRevolution.Entities.Steam;
 
-public readonly partial record struct SteamPos
+public readonly record struct SteamPos
 {
     public int X { get; init; }
     public int Y { get; init; }
