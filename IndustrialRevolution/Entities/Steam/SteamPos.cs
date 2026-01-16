@@ -13,6 +13,10 @@ public readonly record struct SteamPos
     public bool IsFullBlock { get; init; }
     public bool[,,]? SteamGrid { get; init; }
 
+    public static implicit operator SteamPos((int x, int y, int z) tuple)
+        => new SteamPos
+        { X = tuple.x, Y = tuple.y, Z = tuple.z, IsFullBlock = true };
+
     public BlockPos ToBlockPos() => new BlockPos(X, Y, Z);
 
     public int CountOccupied()
