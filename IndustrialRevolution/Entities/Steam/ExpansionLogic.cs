@@ -86,6 +86,61 @@ internal partial class EntitySteam : EntityAgent
         return holes.ToArray();
     }
 
+    public (int x, int y, int z)[] GetConnectingHoles(
+        SteamPos currPos, SteamPos neighPos,
+        (int x, int y, int z)[] currFaceHoles,
+        (int x, int y, int z)[] neighFaceHoles
+    )
+    {
+        if (currFaceHoles.Length == 0) return [];
+        if (currPos.SteamGrid == null)
+        {
+            log?.Warning(
+                $"Steampos {currPos.ToLocalCoords()}" +
+                "has no grid"
+            );
+            return [];
+        }
+
+        // 1. if steam occupies any of the holes
+        // on the connecting face of curr
+        HashSet<(int x, int y, int z)> filledHoles =
+            currFaceHoles
+            .Where(h => currPos.SteamGrid[h.x, h.y, h.z])
+            .ToHashSet();
+
+        // 2. and at least one hole on the connecting
+        // face of curr lines up with a hole on the
+        // connecting face of neigh
+        (int x, int y, int z)[] matchingHoles = neighFaceHoles
+            .Where(h =>
+            {
+
+                BlockFacing face = BlockFacing.FromVector(
+                    neighPos.X - currPos.X,
+                    neighPos.Y - currPos.Y,
+                    neighPos.Z - currPos.Z
+                );
+
+                (EnumAxis axis, int const_val) = GetCoordinateStartForFace(face);
+
+                var pos = axis switch
+                {
+                    EnumAxis.X => (const_val, h.y, h.z),
+                    EnumAxis.Y => (h.x, const_val, h.z),
+                    EnumAxis.Z => (h.x, h.y, const_val),
+                    _ => throw new ArgumentException($"Invalid axis: {axis}")
+                };
+
+                return filledHoles.Contains(pos);
+            })
+            .ToArray();
+
+        if (matchingHoles.Length == 0) return [];
+
+        return matchingHoles.ToArray();
+    }
+
     // TODO: simplify
     public void ExpandSteam()
     {
@@ -106,34 +161,101 @@ internal partial class EntitySteam : EntityAgent
         util.General.BreadthFirstSearch(
             this.occupied, this.toCheck, rootXYZ, limit,
             this.GetNeighbors, SteamPosFactory.SolidFromTuple,
-            (currXYZ, currPos, neighXYZ, neighPos) =>
+            onVisit: (currXYZ, currPos, neighXYZ, neighPos) =>
             {
-                var (x, y, z) = neighXYZ;
-                BlockPos blkPos = new BlockPos(x, y, z);
-                Block neighBlock = World.BlockAccessor.GetBlock(blkPos);
-                if (
-                    this.Api.World.BlockAccessor.GetBlockEntity(blkPos)
-                    is BlockEntityMicroBlock beMicroBlock
-                )
-                {
-                    var voxelGrid = GetVoxelGrid(beMicroBlock);
+                Block neighBlock = World.BlockAccessor
+                .GetBlock(
+                    new BlockPos(neighXYZ.x, neighXYZ.y, neighXYZ.z)
+                );
 
-                    List<(int x, int y, int z)> holes = HolesInFace(
-                        voxelGrid,
+                BlockEntity neighBE = this.Api.World.BlockAccessor
+                .GetBlockEntity(
+                    new BlockPos(neighXYZ.x, neighXYZ.y, neighXYZ.z)
+                );
+
+                BlockEntity currBE = this.Api.World.BlockAccessor
+                .GetBlockEntity(
+                    new BlockPos(currXYZ.x, currXYZ.y, currXYZ.z)
+                );
+
+                var currBEMB = currBE as BlockEntityMicroBlock;
+                var neighBEMB = neighBE as BlockEntityMicroBlock;
+
+                bool neighIsAir = (neighBlock.Id == 0);
+                bool neighIsChsld = (neighBEMB != null);
+                bool currIsChsld = (currBEMB != null);
+                // NOTE: 'solid' here means a solid block (not steam)
+                // while 'fullblock' means no chisel state i.e.
+                // the entire block is occupied by steam
+                // NOTE: 'curr' will always contain steam because its taken
+                // from 'occupied', but it might be either:
+                //  - a fullblock (entire block is steam)
+                //  - a non fullblock (steam occupies part/all of the voids in
+                //  the chiseled block)
+
+                // if neigh is solid block
+                if (!neighIsChsld && !neighIsAir) return;
+
+                if (neighIsChsld)
+                {
+                    byte[,,] neighVoxelGrid = GetVoxelGrid(neighBEMB!);
+                    (int x, int y, int z)[] neighFaceHoles = HolesInFace(
+                        neighVoxelGrid,
                         (currPos.X, currPos.Y, currPos.Z),
                         (neighPos.X, neighPos.Y, neighPos.Z)
                     );
 
-                    if (holes.Count == 0) return;
+                    // if curr is fullblock and
+                    // neigh is chsld but has no face holes
+                    if (!currIsChsld && neighFaceHoles.Length == 0) return;
 
-                    bool[,,] steamGrid = this.ExpandChiseled(voxelGrid, holes);
+                    if (currIsChsld)
+                    {
+                        (int x, int y, int z)[] currFaceHoles = HolesInFace(
+                            GetVoxelGrid(currBEMB!),
+                            (neighPos.X, neighPos.Y, neighPos.Z),
+                            (currPos.X, currPos.Y, currPos.Z)
+                        );
+
+                        neighFaceHoles = GetConnectingHoles(
+                            currPos, neighPos,
+                            currFaceHoles.ToArray(), neighFaceHoles.ToArray()
+                        );
+                    }
+
+                    bool[,,] neighSteamGrid = this.ExpandChiseled(
+                        neighVoxelGrid, neighFaceHoles
+                    );
 
                     neighPos = neighPos with
-                    { IsFullBlock = false, SteamGrid = steamGrid };
-                }
-                else if (neighBlock.Id != 0) return;
+                    { IsFullBlock = false, SteamGrid = neighSteamGrid };
 
-                this.occupied.Add(neighPos);
+                }
+                // if neigh is not chiseled but is air
+                // and curr is chiseled
+                else if (currIsChsld && neighIsAir)
+                {
+                    (int x, int y, int z)[] currFaceHoles = HolesInFace(
+                        GetVoxelGrid(currBEMB!),
+                        (neighPos.X, neighPos.Y, neighPos.Z),
+                        (currPos.X, currPos.Y, currPos.Z)
+                    );
+
+                    if (currPos.SteamGrid == null) {
+                        log?.Warning(
+                            $"pos {currPos.ToLocalCoords()}" +
+                            " should have grid but doesn't");
+                        return;
+                    }
+
+                    bool anyHoles = currFaceHoles
+                        .Where(h => currPos.SteamGrid[h.x, h.y, h.z])
+                        .Any();
+
+                    if (!anyHoles) return;
+                }
+
+                this.occupied.Add(neighXYZ, neighPos);
                 this.toCheck.Enqueue(neighXYZ);
             }
         );

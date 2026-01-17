@@ -14,7 +14,7 @@ namespace IndustrialRevolution.Entities.Steam;
 internal partial class EntitySteam : EntityAgent
 {
     private bool[,,] ExpandChiseled(
-        byte[,,] voxelGrid, List<(int x, int y, int z)> holes
+        byte[,,] voxelGrid, (int x, int y, int z)[] holes
     )
     {
         // TODO: maybe rework this to not use the hashset at all
