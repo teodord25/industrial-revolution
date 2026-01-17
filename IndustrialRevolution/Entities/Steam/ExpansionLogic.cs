@@ -141,7 +141,8 @@ internal partial class EntitySteam : EntityAgent
         return matchingHoles.ToArray();
     }
 
-    // TODO: simplify
+    // NOTE: I don't think there's a simpler way to do this, and any additional
+    // extraction would probably be a net negative
     public void ExpandSteam()
     {
         // TODO: check if root is fullblock
