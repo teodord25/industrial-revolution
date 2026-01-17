@@ -4,7 +4,7 @@ using Vintagestory.API.MathTools;
 
 namespace IndustrialRevolution.util;
 
-public class SteamUtils
+public class SteamLogging
 {
     public static string GridToString<T>(T[,,] array) where T : IConvertible
     {
