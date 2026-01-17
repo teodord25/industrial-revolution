@@ -49,7 +49,7 @@ internal partial class EntitySteam : EntityAgent
         return (EnumAxis.Y, 15);
     }
 
-    private List<(int x, int y, int z)> HolesInFace(
+    private (int x, int y, int z)[] HolesInFace(
         byte[,,] voxelGrid,
         (int x, int y, int z) from,
         (int x, int y, int z) to
@@ -83,7 +83,7 @@ internal partial class EntitySteam : EntityAgent
             }
         }
 
-        return holes;
+        return holes.ToArray();
     }
 
     // TODO: simplify
