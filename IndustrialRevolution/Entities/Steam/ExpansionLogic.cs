@@ -143,16 +143,23 @@ internal partial class EntitySteam : EntityAgent
         // container be enough to allow for pistons and so on?
         // (changing shapes)
 
-        int fullBlocks = this.occupied.Where(o => o.IsFullBlock).Count();
-        int chiseledBlks = this.occupied.Where(o => !o.IsFullBlock).Count();
+        int fullBlocks = this
+            .occupied
+            .Where(o => o.Value.IsFullBlock)
+            .Count();
+
+        int chiseledBlks = this
+            .occupied
+            .Where(o => !o.Value.IsFullBlock)
+            .Count();
 
         SteamVolume? steamVol = SteamVolume.FromBlocks(fullBlocks);
         if (steamVol == null)
             log?.Error("computing full blocks volume went wrong");
 
         SteamVolume chiseledVol = SteamVolume.FromVoxels(
-            this.occupied.Where(o => !o.IsFullBlock)
-            .Select(o => o.CountOccupied())
+            this.occupied.Where(o => !o.Value.IsFullBlock)
+            .Select(o => o.Value.CountOccupied())
             .Sum()
         );
 
@@ -161,10 +168,10 @@ internal partial class EntitySteam : EntityAgent
         WatchedAttributes.SetInt("steamVolume", this.occupied.Count);
         WatchedAttributes.MarkPathDirty("steamVolume");
 
-        List<SteamPos> occupiedList = this.occupied.ToList();
+        List<SteamPos> occupiedList = this.occupied.Values.ToList();
 
         (byte[] steamOccupied, byte[] chiselOccupied) =
-            SteamSerializer.Serialize(occupiedList);
+                SteamSerializer.Serialize(occupiedList);
 
         WatchedAttributes.SetBytes("steamOccupied", steamOccupied);
         WatchedAttributes.MarkPathDirty("steamOccupied");

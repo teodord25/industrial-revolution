@@ -9,7 +9,8 @@ namespace IndustrialRevolution.Entities.Steam;
 
 internal partial class EntitySteam : EntityAgent
 {
-    private HashSet<SteamPos> occupied = new HashSet<SteamPos>();
+    private Dictionary<(int x, int y, int z), SteamPos> occupied =
+        new Dictionary<(int x, int y, int z), SteamPos>();
     private Queue<(int x, int y, int z)> toCheck =
         new Queue<(int x, int y, int z)>();
 
